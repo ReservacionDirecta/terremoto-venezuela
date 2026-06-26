@@ -353,7 +353,7 @@ router.get('/critical-zones', async (req, res) => {
 // ═══════════════════════════════════════════════
 // PATCH /api/reports/:id — actualizar estado
 // ═══════════════════════════════════════════════
-router.patch('/:id', authMiddleware, async (req, res) => {
+router.patch('/:id', async (req, res) => {
   try {
     const { status, encontrado } = req.body;
     const update = {};
@@ -382,7 +382,7 @@ router.patch('/:id', authMiddleware, async (req, res) => {
 // ═══════════════════════════════════════════════
 // PATCH /api/reports/:id/foto — actualizar foto
 // ═══════════════════════════════════════════════
-router.patch('/:id/foto', authMiddleware, async (req, res) => {
+router.patch('/:id/foto', async (req, res) => {
   try {
     const { foto, fotoContentType } = req.body;
     if (!foto) return res.status(400).json({ error: 'foto requerida (base64)' });

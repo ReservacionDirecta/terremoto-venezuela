@@ -1,7 +1,6 @@
 /**
  * Seed Railway MongoDB con datos reales de desaparecidosterremotovenezuela.com
- * Uso: Copia MONGO_URL de Railway Dashboard y ejecuta:
- *   set MONGO_URL=mongodb://... && node seed-railway.js
+ * Uso: node seed-railway.js
  */
 require('dotenv').config();
 const mongoose = require('mongoose');
@@ -9,85 +8,40 @@ const https = require('https');
 const { geocode } = require('./utils/geocode');
 const Report = require('./models/Report');
 
-const MONGO_URI = process.env.MONGO_URL;
-if (!MONGO_URI || MONGO_URI === '') {
-  console.error('❌ Configura MONGO_URL en .env o variable de entorno');
-  process.exit(1);
-}
+const MONGO_URI=process.env.MONGO_URL || process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/terremoto-venezuela';
+if (!MONGO_URI) { console.error('❌ Configura MONGO_URL'); process.exit(1); }
 
-const API = 'https://desaparecidos-terremoto-api.theempire.tech';
-const MAX_PAGES = parseInt(process.argv[2]) || 20;
+const SPAM = [/infinityhotel/i,/TRUSTED/i,/SIMONE/i,/BURATTI/i,/\.it\b/i,/https?:\/\//i,/crypto/i,/bitcoin/i,/\.com\b/i,/\.net\b/i,/\.org\b/i];
+function isSpam(p){return SPAM.some(r=>r.test(p.nombre+' '+p.descripcion+' '+(p.contacto||'')));}
+function fetchPage(page){return new Promise((resolve,reject)=>{https.get(`https://desaparecidos-terremoto-api.theempire.tech/api/personas?page=${page}&pageSize=50`,{timeout:15000},res=>{let d='';res.on('data',c=>d+=c);res.on('end',()=>{try{resolve(JSON.parse(d))}catch(e){reject(e)}})}).on('error',reject)});}
 
-const SPAM = [
-  /infinityhotel/i, /TRUSTED/i, /\.it/i, /https?:\/\//i,
-  /crypto/i, /bitcoin/i, /\.com/i, /\.net/i, /\.org/i,
-];
-
-function isSpam(p) {
-  const t = p.nombre + ' ' + p.descripcion + ' ' + (p.contacto || '');
-  return SPAM.some(r => r.test(t));
-}
-
-function fetchPage(page) {
-  return new Promise((resolve, reject) => {
-    https.get(API + '/api/personas?page=' + page + '&pageSize=50', { timeout: 15000 }, res => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => { try { resolve(JSON.parse(d)); } catch (e) { reject(e); } });
-    }).on('error', reject);
-  });
-}
-
-async function seed() {
-  console.log('🔌 Conectando a MongoDB...');
-  await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 15000 });
-  console.log('✅ Conectado\n');
-
-  const existing = await Report.countDocuments({ source: 'external' });
-  console.log('📊 Existentes:', existing, 'externos');
-
-  let imported = 0, skipped = 0, spam = 0, noGeo = 0;
-
-  for (let page = 1; page <= MAX_PAGES; page++) {
-    process.stdout.write('📥 P' + page + '/' + MAX_PAGES + '... ');
-    let data;
-    try { data = await fetchPage(page); }
-    catch (e) { console.log('❌', e.message); break; }
-    if (!data?.items?.length) { console.log('vacía'); break; }
-
-    let pg = 0;
-    for (const p of data.items) {
-      if (isSpam(p)) { spam++; continue; }
-      const exists = await Report.findOne({ externalId: p.id });
-      if (exists) { skipped++; continue; }
-      const coords = await geocode(p.ubicacion);
-      if (!coords) { noGeo++; continue; }
-      try {
-        await Report.create({
-          tipo: 'desaparecido', source: 'external', externalId: p.id,
-          location: { type: 'Point', coordinates: [coords[1], coords[0]] },
-          nombre: (p.nombre || '').trim().slice(0, 200),
-          edad: p.edad || undefined,
-          ultimaUbicacion: (p.ubicacion || '').trim().slice(0, 500),
-          description: (p.descripcion || '').trim().slice(0, 500),
-          contactoReportante: (p.contacto || '').trim().slice(0, 200),
-          fotoExterna: (p.foto && p.foto.startsWith('http')) ? p.foto : undefined,
-          status: p.estado === 'localizado' ? 'localizado' : 'pendiente',
-          encontrado: p.estado === 'localizado',
-          fechaEncontrado: p.estado === 'localizado' ? new Date(p.updatedAt) : null,
-          reportedAt: new Date(p.createdAt), flags: 0,
-        });
-        imported++; pg++;
-      } catch (e) {}
+async function seed(){
+  await mongoose.connect(MONGO_URI,{serverSelectionTimeoutMS:15000});
+  console.log('✅ Conectado');
+  const existing = await Report.countDocuments({source:'external'});
+  console.log('📊 Existentes:',existing);
+  let imp=0,skip=0,spam=0,ng=0;
+  
+  // Obtener total de páginas
+  const first = await fetchPage(1);
+  const totalPages = Math.min(first.totalPages, parseInt(process.argv[2]) || 1169);
+  console.log(`📥 ${totalPages} páginas\n`);
+  
+  for(let p=1;p<=totalPages;p++){
+    if(p%50===0) process.stdout.write(`\n📄 ${p}/${totalPages} · +${imp}\n`);
+    let d;try{d=await fetchPage(p);}catch(e){console.log('❌',e.message);break;}
+    if(!d?.items?.length) break;
+    let pg=0;
+    for(const i of d.items){
+      if(isSpam(i)){spam++;continue;}
+      if(await Report.findOne({externalId:i.id})){skip++;continue;}
+      const c=await geocode(i.ubicacion);if(!c){ng++;continue;}
+      try{await Report.create({tipo:'desaparecido',source:'external',externalId:i.id,location:{type:'Point',coordinates:[c[1],c[0]]},nombre:(i.nombre||'').trim().slice(0,200),edad:i.edad||undefined,ultimaUbicacion:(i.ubicacion||'').trim().slice(0,500),description:(i.descripcion||'').trim().slice(0,500),contactoReportante:(i.contacto||'').trim().slice(0,200),fotoExterna:(i.foto&&i.foto.startsWith('http'))?i.foto:undefined,status:i.estado==='localizado'?'localizado':'pendiente',encontrado:i.estado==='localizado',fechaEncontrado:i.estado==='localizado'?new Date(i.updatedAt):null,reportedAt:new Date(i.createdAt),flags:0});imp++;pg++;}catch(e){}
     }
-    console.log('+' + pg);
-    if (page < MAX_PAGES) await new Promise(r => setTimeout(r, 800));
+    process.stdout.write('.');pg&&process.stdout.write(`+${pg}`);
+    if(p<totalPages) await new Promise(r=>setTimeout(r,500));
   }
-
-  const total = await Report.countDocuments({ source: 'external' });
-  console.log('\n✅ MongoDB:', total, 'externos');
-  console.log('   Importados:', imported, '| Saltados:', skipped, '| Spam:', spam, '| Sin geo:', noGeo);
+  console.log(`\n\n✅ Importados:${imp} | Saltados:${skip} | Spam:${spam} | Sin geo:${ng}`);
   await mongoose.disconnect();
 }
-
-seed().catch(e => { console.error('❌', e.message); process.exit(1); });
+seed().catch(e=>{console.error('❌',e.message);process.exit(1);});

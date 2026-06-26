@@ -52,7 +52,7 @@ export default function Desaparecidos({ reports, onUpdate, readOnly }) {
         {displayed.length === 0 && <div className="empty-state">{q ? 'Sin resultados' : 'No hay desaparecidos reportados'}</div>}
         <div className="grid-cards">
           {[...displayed.filter(r => !r.encontrado), ...displayed.filter(r => r.encontrado)].map(r => (
-            <DesCard key={r._id} r={r} onMarcar={readOnly ? null : marcar} onFoto={setLightbox} fotos={fotos} setFotos={setFotos} />
+            <DesCard key={r._id} r={r} onMarcar={marcar} onFoto={setLightbox} fotos={fotos} setFotos={setFotos} />
           ))}
         </div>
       </div>

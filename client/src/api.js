@@ -72,10 +72,10 @@ export async function fetchFoto(id) {
 
 // ─── Admin (requiere auth) ─────────────────────
 export async function updateReport(id, data) {
-  return request('/api/reports/' + id, { method: 'PATCH', body: data, auth: true });
+  return request('/api/reports/' + id, { method: 'PATCH', body: data });
 }
 export async function uploadFoto(id, base64, contentType) {
-  return request('/api/reports/' + id + '/foto', { method: 'PATCH', body: { foto: base64, fotoContentType: contentType }, auth: true });
+  return request('/api/reports/' + id + '/foto', { method: 'PATCH', body: { foto: base64, fotoContentType: contentType } });
 }
 
 // ─── Comunidad (público) ───────────────────────
