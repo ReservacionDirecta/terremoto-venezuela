@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { updateReport, flagReport } from '../api';
 
 const sevBadge = {
-  alta:  { bg:'#fef2f2', color:'#dc2626', dot:'🔴' },
-  media: { bg:'#fefce8', color:'#ca8a04', dot:'🟡' },
-  baja:  { bg:'#eff6ff', color:'#2563eb', dot:'🔵' }
+  alta:  { bg:'#fef2f2', color:'#dc2626', dot:'' },
+  media: { bg:'#fefce8', color:'#ca8a04', dot:'' },
+  baja:  { bg:'#eff6ff', color:'#2563eb', dot:'' }
 };
 
 const statusBadge = {
@@ -36,9 +36,9 @@ export default function Sobrevivientes({ reports, onUpdate, readOnly }) {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div className="panel-toolbar" style={{padding:'12px 16px'}}>
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <h2 className="fw-700" style={{ fontSize: '1.05rem' }}>🆘 Sobrevivientes Atrapados</h2>
+          <h2 className="fw-700" style={{ fontSize: '1.05rem' }}>Sobrevivientes Atrapados</h2>
           <span className="fs-sm text-gray">
-            {reports.length} reportes · 🔴{attn} pendientes · 🔵{inProgress} en proceso · 🟢{done} atendidos
+            {reports.length} reportes · {attn} pendientes · {inProgress} en proceso · {done} atendidos
           </span>
         </div>
 
@@ -46,9 +46,9 @@ export default function Sobrevivientes({ reports, onUpdate, readOnly }) {
         <div className="flex gap-1 flex-wrap">
           {[
             { k: 'all', l: 'Todos' },
-            { k: 'pendiente', l: '🔴 Pendientes' },
-            { k: 'en_proceso', l: '🔵 En proceso' },
-            { k: 'atendido', l: '🟢 Atendidos' },
+            { k: 'pendiente', l: 'Pendientes' },
+            { k: 'en_proceso', l: 'En proceso' },
+            { k: 'atendido', l: 'Atendidos' },
           ].map(f => (
             <button key={f.k}
                     className={`btn btn-sm ${statusFilter === f.k ? 'btn-outline active' : 'btn-outline'}`}
@@ -80,7 +80,7 @@ export default function Sobrevivientes({ reports, onUpdate, readOnly }) {
                   position: 'absolute', top: 12, right: 12,
                   background: sv.bg, color: sv.color
                 }}>
-                  {sv.dot} {r.severity.toUpperCase()}
+                  {r.severity.toUpperCase()}
                 </span>
 
                 {/* Info principal */}
@@ -95,7 +95,7 @@ export default function Sobrevivientes({ reports, onUpdate, readOnly }) {
                     <div className="kpi-label">Personas</div>
                   </div>
                   <div className="kpi">
-                    <div className="kpi-value" style={{ color: sv.color }}>{sv.dot}</div>
+                    <div className="kpi-value" style={{ color: sv.color, fontSize: '1.2rem', marginTop: '6px' }}>{r.severity.toUpperCase()}</div>
                     <div className="kpi-label">{r.severity}</div>
                   </div>
                   <div className="kpi">
@@ -109,7 +109,7 @@ export default function Sobrevivientes({ reports, onUpdate, readOnly }) {
                 {/* Ubicación */}
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="fs-sm text-gray">
-                    📍 {r.ultimaUbicacion || `${r.lat.toFixed(4)}, ${r.lng.toFixed(4)}`}
+                    {r.ultimaUbicacion || `${r.lat.toFixed(4)}, ${r.lng.toFixed(4)}`}
                   </span>
                   <a href={mapsUrl} target="_blank" rel="noreferrer" className="fs-xs" style={{ color: '#2563eb' }}>
                     Google Maps
@@ -119,7 +119,7 @@ export default function Sobrevivientes({ reports, onUpdate, readOnly }) {
                 {/* Contacto */}
                 {r.contactoReportante && (
                   <div className="fs-xs text-gray mb-2">
-                    📞 Reportado por: {r.contactoReportante}
+                    Reportado por: {r.contactoReportante}
                     {r.telefonoReportante ? ` — ${r.telefonoReportante}` : ''}
                   </div>
                 )}
@@ -135,21 +135,21 @@ export default function Sobrevivientes({ reports, onUpdate, readOnly }) {
                     <button className="btn btn-sm flex-1"
                             style={{ background: 'var(--blue-bg)', color: 'var(--blue)', border: '1px solid var(--blue)' }}
                             onClick={() => handleStatus(r._id, 'en_proceso')}>
-                      🔵 En Proceso
+                      En Proceso
                     </button>
                   )}
                   {(r.status === 'pendiente' || r.status === 'en_proceso') && (
                     <button className="btn btn-sm flex-1"
                             style={{ background: 'var(--green-bg)', color: 'var(--green)', border: '1px solid var(--green)' }}
                             onClick={() => handleStatus(r._id, 'atendido')}>
-                      🟢 Atendido
+                      Atendido
                     </button>
                   )}
                   {r.status === 'atendido' && (
                     <button className="btn btn-sm flex-1"
                             style={{ background: 'var(--red-bg)', color: 'var(--red)', border: '1px solid var(--red)' }}
                             onClick={() => handleStatus(r._id, 'pendiente')}>
-                      🔴 Reabrir
+                      Reabrir
                     </button>
                   )}
                 </div>
@@ -180,7 +180,7 @@ function FlagBtn({ id, currentFlags }) {
   return (
     <button onClick={handleFlag} className="fs-xs"
             style={{display:'block',width:'100%',marginTop:6,padding:'4px',background:'none',border:'none',cursor:flagged?'default':'pointer',color:flagged?'#16a34a':'#999',textAlign:'right'}}>
-      {flagged ? '✅ Reportado' : `🚩 ${count > 0 ? `Reportar error (${count})` : 'Reportar error'}`}
+      {flagged ? 'Reportado' : `${count > 0 ? `Reportar error (${count})` : 'Reportar error'}`}
     </button>
   );
 }

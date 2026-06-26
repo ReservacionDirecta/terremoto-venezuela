@@ -4,8 +4,10 @@ import Logo from './components/Logo';
 import ReportForm from './components/ReportForm';
 import HeatmapView from './components/HeatmapView';
 import Desaparecidos from './components/Desaparecidos';
-import Mascotas from './components/Mascotas';
 import Sobrevivientes from './components/Sobrevivientes';
+import Mascotas from './components/Mascotas';
+import LeyendaEmergencia from './components/LeyendaEmergencia';
+import GuiaUso from './components/GuiaUso';
 import { createReport, fetchReports, fetchCriticalZones } from './api';
 
 export default function PublicPage() {
@@ -70,7 +72,7 @@ export default function PublicPage() {
       <div className="topbar" style={{ padding: '8px 12px' }}>
         <div className="flex items-center gap-2">
           <Logo size={24} />
-          <h1 style={{ fontSize: '1.1rem' }}>🇻🇪 Terremoto</h1>
+          <h1 style={{ fontSize: '1.1rem' }}>📍 Hallados</h1>
         </div>
         <div className="flex items-center gap-2">
           <button className="theme-toggle" onClick={toggle} style={{ padding: 4 }}>{dark ? '☀️' : '🌙'}</button>
@@ -81,12 +83,12 @@ export default function PublicPage() {
 
       {success && (
         <div className="fs-sm fw-700" style={{padding:'8px',textAlign:'center',background:'#f0fdf4',color:'#16a34a'}}>
-          ✅ {success}
+          {success}
         </div>
       )}
       {error && (
         <div className="fs-sm" style={{padding:'8px',textAlign:'center',background:'#fef2f2',color:'#dc2626'}}>
-          ⚠️ {error} <button className="btn btn-sm text-red ml-2" onClick={loadPublicData}>🔄</button>
+          {error} <button className="btn btn-sm text-red ml-2" onClick={loadPublicData}>Reintentar</button>
         </div>
       )}
 
@@ -107,12 +109,11 @@ export default function PublicPage() {
                 <p className="fs-xs text-muted">No hay reportes recientes.</p>
               ) : (
                 recentReports.map(r => (
-                  <div key={r._id} className="recent-card" style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? '#2563eb' : r.tipo === 'mascota' ? '#f97316' : '#dc2626'}`}}>
-                    <div style={{ fontSize: '1.5rem' }}>{r.tipo === 'desaparecido' ? '🔍' : r.tipo === 'mascota' ? '🐾' : '🆘'}</div>
+                  <div key={r._id} className="recent-card" style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`}}>
                     <div style={{ flex: 1 }}>
                       <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
                       <div className="fs-xs text-gray mt-1">
-                        📍 {r.ultimaUbicacion || 'Ubicación marcada'}
+                        {r.ultimaUbicacion || 'Ubicación marcada'}
                       </div>
                     </div>
                   </div>
@@ -125,21 +126,18 @@ export default function PublicPage() {
         {tab === 'reportar' && (
           <div style={{ padding: '20px', overflowY: 'auto', height: '100%' }}>
             <div className="hero-public" style={{ padding: '20px 10px', borderRadius: 12 }}>
-              <h2 style={{fontSize:'1.3rem',fontWeight:700,color:'#dc2626',marginBottom:10}}>Reconectemos a cada familia.</h2>
-              <p style={{color:'#666',fontSize:'0.9rem',maxWidth:420,margin:'0 auto',lineHeight:1.5}}>
-                Si no logras contactar a alguien, hay mascotas perdidas o personas atrapadas, repórtalo aquí.
+              <h2 style={{fontSize:'1.3rem',fontWeight:700,color:'var(--text)',marginBottom:10}}>Registro de Reportes</h2>
+              <p style={{color:'var(--text2)',fontSize:'0.9rem',maxWidth:420,margin:'0 auto',lineHeight:1.5}}>
+                Seleccione el tipo de incidente para crear un nuevo reporte en el sistema.
               </p>
               <div style={{maxWidth:380,margin:'20px auto 0',display:'flex',flexDirection:'column',gap:12}}>
                 <button className="btn btn-secondary btn-block" style={{ padding: '16px' }} onClick={() => setShowForm('desaparecido')}>
-                  <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: 4 }}>🔍</span>
                   Reportar Desaparecido
                 </button>
-                <button className="btn btn-warning btn-block" style={{ padding: '16px', background: '#f97316', border: 'none' }} onClick={() => setShowForm('mascota')}>
-                  <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: 4 }}>🐾</span>
+                <button className="btn btn-warning btn-block" style={{ padding: '16px', background: 'var(--yellow)', color: 'var(--text)', border: 'none' }} onClick={() => setShowForm('mascota')}>
                   Reportar Mascota
                 </button>
                 <button className="btn btn-primary btn-block" style={{ padding: '16px' }} onClick={() => setShowForm('sobreviviente')}>
-                  <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: 4 }}>🆘</span>
                   Reportar Atrapados
                 </button>
               </div>
@@ -152,13 +150,13 @@ export default function PublicPage() {
             <div className="flex" style={{position:'sticky',top:0,zIndex:10,background:'var(--card)',borderBottom:'2px solid var(--border)'}}>
               <button className="flex-1 fw-700 fs-sm" 
                       style={{padding:'12px',background:'transparent',border:'none',cursor:'pointer',borderBottom:dirTab==='des'?'2px solid var(--blue)':'none',color:dirTab==='des'?'var(--blue)':'var(--text3)'}} 
-                      onClick={()=>setDirTab('des')}>🔍 Desaparecidos</button>
+                      onClick={()=>setDirTab('des')}>Desaparecidos</button>
               <button className="flex-1 fw-700 fs-sm" 
-                      style={{padding:'12px',background:'transparent',border:'none',cursor:'pointer',borderBottom:dirTab==='mas'?'2px solid #f97316':'none',color:dirTab==='mas'?'#f97316':'var(--text3)'}} 
-                      onClick={()=>setDirTab('mas')}>🐾 Mascotas</button>
+                      style={{padding:'12px',background:'transparent',border:'none',cursor:'pointer',borderBottom:dirTab==='mas'?'2px solid var(--yellow)':'none',color:dirTab==='mas'?'var(--yellow)':'var(--text3)'}} 
+                      onClick={()=>setDirTab('mas')}>Mascotas</button>
               <button className="flex-1 fw-700 fs-sm" 
                       style={{padding:'12px',background:'transparent',border:'none',cursor:'pointer',borderBottom:dirTab==='sob'?'2px solid var(--red)':'none',color:dirTab==='sob'?'var(--red)':'var(--text3)'}} 
-                      onClick={()=>setDirTab('sob')}>🆘 Sobrevivientes</button>
+                      onClick={()=>setDirTab('sob')}>Sobrevivientes</button>
             </div>
             <div style={{ flex: 1, overflow: 'hidden' }}>
               {loading && reports.length === 0 ? (
@@ -173,21 +171,36 @@ export default function PublicPage() {
             </div>
           </div>
         )}
+
+        {tab === 'guia' && (
+          <div className="overflow-auto h-full">
+            <GuiaUso />
+          </div>
+        )}
+
+        {tab === 'emergencia' && (
+          <div className="overflow-auto h-full">
+            <LeyendaEmergencia />
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation */}
       <nav className="bottom-nav">
         <button className={`nav-item ${tab === 'inicio' ? 'active' : ''}`} onClick={() => setTab('inicio')}>
-          <div className="nav-icon">🗺️</div>
-          Inicio
+          🏠 Inicio
         </button>
         <button className={`nav-item ${tab === 'reportar' ? 'active' : ''}`} onClick={() => setTab('reportar')}>
-          <div className="nav-icon">➕</div>
-          Reportar
+          📝 Reportar
         </button>
         <button className={`nav-item ${tab === 'directorio' ? 'active' : ''}`} onClick={() => setTab('directorio')}>
-          <div className="nav-icon">📋</div>
-          Directorio
+          📋 Directorio
+        </button>
+        <button className={`nav-item ${tab === 'guia' ? 'active' : ''}`} onClick={() => setTab('guia')}>
+          📖 Guía
+        </button>
+        <button className={`nav-item ${tab === 'emergencia' ? 'active' : ''}`} onClick={() => setTab('emergencia')}>
+          📞 Emergencia
         </button>
       </nav>
 

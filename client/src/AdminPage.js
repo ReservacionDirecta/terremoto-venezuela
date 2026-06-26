@@ -52,12 +52,12 @@ export default function AdminPage({ onLogout }) {
   const filteredReports = filter === 'all' ? reports : reports.filter(r => r.tipo === filter);
 
   const tabs = [
-    { key: 'mapa',            label: '🔥 Mapa',             color: '#dc2626' },
-    { key: 'desaparecidos',   label: '🔍 Desaparecidos',    color: '#2563eb' },
-    { key: 'mascotas',        label: '🐾 Mascotas',         color: '#f97316' },
-    { key: 'sobrevivientes',  label: '🆘 Sobrevivientes',   color: '#dc2626' },
-    { key: 'zonas',           label: '🎯 Zonas Críticas',   color: '#eab308' },
-    { key: 'stats',           label: '📊 Estadísticas',     color: '#111' },
+    { key: 'mapa',            label: 'Mapa',             color: '#dc2626' },
+    { key: 'desaparecidos',   label: 'Desaparecidos',    color: '#2563eb' },
+    { key: 'mascotas',        label: 'Mascotas',         color: '#f97316' },
+    { key: 'sobrevivientes',  label: 'Sobrevivientes',   color: '#dc2626' },
+    { key: 'zonas',           label: 'Zonas Críticas',   color: '#eab308' },
+    { key: 'stats',           label: 'Estadísticas',     color: '#111' },
   ];
 
   // Etiqueta del filtro activo
@@ -69,7 +69,7 @@ export default function AdminPage({ onLogout }) {
       <div className="topbar">
         <div className="flex items-center gap-2 flex-wrap">
           <Logo size={28} />
-          <h1>🇻🇪 Dashboard</h1>
+          <h1>📍 Hallados · Panel</h1>
           {stats && <span className="fs-xs" style={{opacity:0.85}}>
             {stats.total} reportes · {stats.sobrevivientes}🆘 · {stats.desaparecidos}🔍
           </span>}
@@ -79,7 +79,7 @@ export default function AdminPage({ onLogout }) {
             {dark ? '☀️' : '🌙'}
           </button>
           <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent'}}
-                  onClick={handleLogout}>🚪 Salir</button>
+                  onClick={handleLogout}>Salir</button>
         </div>
       </div>
 
@@ -89,10 +89,10 @@ export default function AdminPage({ onLogout }) {
         <div className="flex items-center gap-2 flex-wrap" style={{padding:'6px 12px'}}>
           <span className="fs-xs text-gray fw-700">Filtrar:</span>
           {[
-            {k:'all',l:'👥 Todos'},
-            {k:'desaparecido',l:'🔍 Desaparecidos'},
-            {k:'mascota',l:'🐾 Mascotas'},
-            {k:'sobreviviente',l:'🆘 Atrapados'},
+            {k:'all',l:'Todos'},
+            {k:'desaparecido',l:'Desaparecidos'},
+            {k:'mascota',l:'Mascotas'},
+            {k:'sobreviviente',l:'Atrapados'},
           ].map(f => (
             <button key={f.k}
                     className={`btn btn-sm ${filter === f.k ? 'btn-outline active' : 'btn-outline'}`}
@@ -128,7 +128,7 @@ export default function AdminPage({ onLogout }) {
           <div className="empty-state">
             <p className="text-red fw-700">Error al cargar</p>
             <p className="fs-sm text-gray mt-2">{error}</p>
-            <button className="btn btn-sm btn-outline mt-3" onClick={loadData}>🔄 Reintentar</button>
+            <button className="btn btn-sm btn-outline mt-3" onClick={loadData}>Reintentar</button>
           </div>
         ) : (
           <>
@@ -156,11 +156,11 @@ export default function AdminPage({ onLogout }) {
 
       {/* FABs */}
       <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <button className="fab" style={{background:'#2563eb',width:48,height:48,fontSize:18}}
-                onClick={() => setShowForm('desaparecido')}>🔍</button>
-        <button className="fab" style={{background:'#f97316',width:48,height:48,fontSize:18}}
-                onClick={() => setShowForm('mascota')}>🐾</button>
-        <button className="fab" onClick={() => setShowForm('sobreviviente')}>🆘</button>
+        <button className="fab" style={{background:'var(--blue)',width:48,height:48,fontSize:18,fontWeight:'bold',boxShadow:'0 4px 14px rgba(37,99,235,0.3)'}}
+                onClick={() => setShowForm('desaparecido')}>+ D</button>
+        <button className="fab" style={{background:'var(--yellow)',width:48,height:48,fontSize:18,fontWeight:'bold',boxShadow:'0 4px 14px rgba(234,179,8,0.3)'}}
+                onClick={() => setShowForm('mascota')}>+ M</button>
+        <button className="fab" style={{fontWeight:'bold'}} onClick={() => setShowForm('sobreviviente')}>+ S</button>
       </div>
 
       {/* Modal */}

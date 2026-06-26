@@ -62,21 +62,23 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
       reports.forEach(r => {
         const isS = r.tipo === 'sobreviviente';
         const isExt = r.source === 'external';
+        const isM = r.tipo === 'mascota';
         const c = isExt ? '#2563eb' : isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
-        const em = isExt ? '🌐' : isS ? '🆘' : r.encontrado ? '✅' : '🔍';
         const icon = L.divIcon({
-          html: `<div style="width:16px;height:16px;background:${c};border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;">${em}</div>`,
-          iconSize: [16,16], iconAnchor: [8,8]
+          html: `<div style="width:14px;height:14px;background:${c};border:2px solid #fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
+          iconSize: [14,14], iconAnchor: [7,7]
         });
         
-        let title = isS ? '🆘 Sobreviviente '+r.severity : isM ? (r.encontrado ? '🟢 Mascota Encontrada' : '🐾 Mascota Atrapada/Perdida') : (r.encontrado ? '✅ Localizado' : '🔍 Desaparecido');
-        L.marker([r.lat, r.lng], { icon }).addTo(markersRef.current).bindPopup(`
+        let title = isS ? 'Sobreviviente '+r.severity : isM ? (r.encontrado ? 'Mascota Encontrada' : 'Mascota Atrapada/Perdida') : (r.encontrado ? 'Localizado' : 'Desaparecido');
+        if (isExt) title += ' (Cotejado)';
+        const marker = L.marker([r.lat, r.lng], { icon }).addTo(markersRef.current);
+        marker.bindPopup(`
           <div style="font-family:system-ui;min-width:200px">
             <b style="color:${c}">${title}</b>
             ${(!isS && r.nombre) ? `<p style="margin:4px 0"><b>${r.nombre}</b>${r.edad?' ('+r.edad+')':''}</p>` : ''}
             ${(isS || isM) ? `<p>${r.description || ''}</p>` : ''}
-            ${isS ? `<p>👥 <b>${r.survivorsCount}</b></p>` : ''}
-            <p style="color:#666;font-size:0.7rem">📍 ${r.ultimaUbicacion||r.lat.toFixed(4)+', '+r.lng.toFixed(4)}</p>
+            ${isS ? `<p><strong>Personas:</strong> ${r.survivorsCount}</p>` : ''}
+            <p style="color:#666;font-size:0.7rem">Ubicación: ${r.ultimaUbicacion||r.lat.toFixed(4)+', '+r.lng.toFixed(4)}</p>
           </div>`);
       });
     }
@@ -89,14 +91,14 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
       const c = z.severity==='crítica'?'#dc2626':z.severity==='alta'?'#eab308':'#2563eb';
       const circle = L.circle([z.center.lat, z.center.lng], { radius: z.radiusKm*1000, color:c, weight:3, opacity:0.85, fillColor:c, fillOpacity:0.1, dashArray:'8 4' });
       circle._isCZ = true; circle.addTo(map);
-      circle.bindPopup(`<div style="font-family:system-ui;min-width:200px"><h3 style="color:${c}">🎯 ${z.severity.toUpperCase()}</h3><p>📊 ${z.score}/100</p><p>📍 ${z.reportCount} reportes</p><p>👥 ${z.totalSurvivors} sobrevivientes</p></div>`);
+      circle.bindPopup(`<div style="font-family:system-ui;min-width:200px"><h3 style="color:${c};margin-top:0;font-size:1.1rem;font-weight:700;">Severidad ${z.severity.toUpperCase()}</h3><p style="margin:4px 0;"><strong>Score:</strong> ${z.score}/100</p><p style="margin:4px 0;"><strong>Reportes:</strong> ${z.reportCount}</p><p style="margin:4px 0;font-weight:700;">Sobrevivientes: ${z.totalSurvivors}</p></div>`);
     });
   }, [criticalZones]);
 
   const filters = [
-    {k:'all',l:'👥 Todos'},
-    {k:'desaparecido',l:'🔍 Desaparecidos'},
-    {k:'sobreviviente',l:'🆘 Atrapados'}
+    {k:'all',l:'Todos'},
+    {k:'desaparecido',l:'Desaparecidos'},
+    {k:'sobreviviente',l:'Atrapados'}
   ];
 
   const extCount = reports.filter(r => r.source === 'external').length;
