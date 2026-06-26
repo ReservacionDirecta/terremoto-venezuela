@@ -222,7 +222,7 @@ export default function PublicPage() {
                         </div>
                       );}
                       ))
-                    )}
+                    }
                   </>
                 )}
               </div>
@@ -238,7 +238,7 @@ export default function PublicPage() {
                   cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700,
                   color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6
                 }}>
-                ▲ Reportes ({reports.length})
+                {`▲ Reportes (${reports.length})`}
               </button>
             )}
           </div>
