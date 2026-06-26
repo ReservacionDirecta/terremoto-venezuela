@@ -198,22 +198,23 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
       {/* React Modal para el Cluster seleccionado */}
       {selectedCluster && (
         <div style={{
-          position: 'absolute', top: 10, left: 10, zIndex: 2000, 
-          background: '#fff', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-          width: 300, maxHeight: 'calc(100% - 20px)', display: 'flex', flexDirection: 'column'
+          position: 'absolute', top: 70, left: 10, zIndex: 2000, 
+          background: 'var(--card)', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+          width: 300, maxHeight: 'calc(100% - 150px)', display: 'flex', flexDirection: 'column',
+          border: '1px solid var(--border)'
         }}>
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)' }}>
               📍 {selectedCluster.reports.length} {selectedCluster.reports.length === 1 ? 'Reporte' : 'Reportes'}
             </h3>
-            <button onClick={() => setSelectedCluster(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>✕</button>
+            <button onClick={() => setSelectedCluster(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: 0, color: 'var(--text3)' }}>✕</button>
           </div>
-          <div style={{ padding: '12px 16px', overflowY: 'auto', flex: 1 }}>
+          <div style={{ padding: '12px 16px', overflowY: 'auto', flex: 1 }} className="scroll-dark">
             {selectedCluster.reports.map(r => {
               const isS = r.tipo === 'sobreviviente';
               const isM = r.tipo === 'mascota';
               const isExt = r.source === 'external';
-              const c = isExt ? '#2563eb' : isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
+              const c = isExt ? 'var(--blue)' : isS ? sevColors[r.severity] : r.encontrado ? 'var(--green)' : 'var(--blue)';
               let title = isS ? 'Sobreviviente '+r.severity : isM ? (r.encontrado ? 'Mascota Encontrada' : 'Mascota Atrapada') : (r.encontrado ? 'Localizado' : 'Desaparecido');
               
               return (
@@ -221,13 +222,14 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
                      onClick={() => { if (onReportClick) onReportClick(r); }}
                      style={{
                        marginBottom: 12, borderLeft: `4px solid ${c}`, paddingLeft: 12, 
-                       cursor: 'pointer', paddingBottom: 12, borderBottom: '1px solid #f5f5f5',
-                       background: 'var(--card-hover)', transition: 'background 0.2s', borderRadius: '0 4px 4px 0'
+                       cursor: 'pointer', paddingBottom: 12, borderBottom: '1px solid var(--border)',
+                       background: 'var(--bg2)', transition: 'background 0.2s', borderRadius: '0 8px 8px 0',
+                       paddingTop: 8
                      }}>
-                  <b style={{ color: c, display: 'block', fontSize: '0.9rem' }}>{title}</b>
-                  {(!isS && r.nombre) && <p style={{ margin: '2px 0', fontSize: '0.9rem', fontWeight: 700 }}>{r.nombre}</p>}
-                  {(isS && r.survivorsCount) && <p style={{ margin: '2px 0', fontSize: '0.85rem' }}><strong>Personas:</strong> {r.survivorsCount}</p>}
-                  <p style={{ color: '#666', fontSize: '0.75rem', margin: '4px 0 0 0' }}>Estado: <b>{r.status||'N/A'}</b></p>
+                  <b style={{ color: c, display: 'block', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</b>
+                  {(!isS && r.nombre) && <p style={{ margin: '4px 0 2px', fontSize: '0.92rem', fontWeight: 700, color: 'var(--text)' }}>{r.nombre}</p>}
+                  {(isS && r.survivorsCount) && <p style={{ margin: '4px 0 2px', fontSize: '0.85rem', color: 'var(--text2)' }}><strong>Personas:</strong> {r.survivorsCount}</p>}
+                  <p style={{ color: 'var(--text3)', fontSize: '0.75rem', margin: '4px 0 0 0' }}>Estado: <b style={{color: 'var(--text2)'}}>{r.status||'N/A'}</b></p>
                 </div>
               );
             })}
