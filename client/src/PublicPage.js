@@ -304,6 +304,21 @@ export default function PublicPage() {
             <LeyendaEmergencia />
           </div>
         )}
+
+        {/* Footer credit - visible on scrollable tabs */}
+        {tab !== 'inicio' && (
+          <div style={{
+            textAlign: 'center', padding: '20px 16px 8px',
+            fontSize: '0.72rem', color: 'var(--muted)',
+            letterSpacing: '0.03em'
+          }}>
+            hecho con amor por{' '}
+            <a href="https://chamba.digital" target="_blank" rel="noopener noreferrer"
+               style={{ color: 'var(--text2)', fontWeight: 700, textDecoration: 'none' }}>
+              chamba.digital
+            </a>
+          </div>
+        )}
       </div>
 
       <nav className="bottom-nav">
@@ -333,42 +348,57 @@ export default function PublicPage() {
       {selectedReport && (
         <div className="modal-overlay" onClick={() => setSelectedReport(null)} style={{ zIndex: 3000, padding: 15 }}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 450, width: '100%', padding: '24px 20px', borderRadius: 20 }}>
-            {/* Banner superior */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+            
+            {/* Header / Banner */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div>
-                <span style={{ background: selectedReport.encontrado ? '#dcfce7' : '#fee2e2', color: selectedReport.encontrado ? '#166534' : '#991b1b', padding: '4px 10px', borderRadius: 12, fontSize: '0.8rem', fontWeight: 700 }}>
-                  {selectedReport.status || (selectedReport.encontrado ? 'Encontrado' : 'Sin contacto')}
+                <span style={{ 
+                  background: selectedReport.encontrado ? 'rgb(220, 252, 231)' : 'rgb(254, 226, 226)', 
+                  color: selectedReport.encontrado ? 'rgb(22, 101, 52)' : 'rgb(153, 27, 27)', 
+                  padding: '4px 10px', 
+                  borderRadius: 12, 
+                  fontSize: '0.8rem', 
+                  fontWeight: 700 
+                }}>
+                  {selectedReport.status || (selectedReport.encontrado ? 'localizado' : 'pendiente')}
                 </span>
-                <h2 style={{ margin: '10px 0 0 0', fontSize: '1.6rem', color: 'var(--text)', fontWeight: 800 }}>
+                <h2 style={{ margin: '10px 0px 0px', fontSize: '1.6rem', color: 'var(--text)', fontWeight: 800 }}>
                   {selectedReport.tipo === 'sobreviviente' ? 'Personas Atrapadas' : selectedReport.nombre || 'Desconocido'}
                 </h2>
                 {selectedReport.tipo === 'desaparecido' && selectedReport.edad && (
-                  <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text2)' }}>{selectedReport.edad} años</p>
+                  <p style={{ margin: '0px', fontSize: '1rem', color: 'var(--text2)' }}>{selectedReport.edad} años</p>
                 )}
                 {selectedReport.tipo === 'desaparecido' && selectedReport.identificacion && (
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text3)' }}>CI/DNI: {selectedReport.identificacion}</p>
+                  <p style={{ margin: '0px', fontSize: '0.9rem', color: 'var(--text3)' }}>CI/DNI: {selectedReport.identificacion}</p>
                 )}
               </div>
-              <button onClick={() => setSelectedReport(null)} style={{ background: '#f1f5f9', border: 'none', width: 36, height: 36, borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              <button onClick={() => setSelectedReport(null)} style={{ background: 'rgb(241, 245, 249)', borderStyle: 'none', width: '36px', height: '36px', borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
 
-            {/* Foto si existe */}
-            {selectedReport.foto && (
-              <div style={{ marginBottom: 20 }}>
-                <img src={selectedReport.foto} alt="Foto" style={{ width: '100%', height: 250, objectFit: 'cover', borderRadius: 16 }} />
-              </div>
-            )}
+            {/* Foto del Registro */}
+            <div style={{ marginBottom: 20 }}>
+              {selectedReport.foto ? (
+                <img src={selectedReport.foto} alt="Foto del registro" style={{ width: '100%', height: 250, objectFit: 'cover', borderRadius: 16 }} />
+              ) : (
+                <div style={{ width: '100%', height: 180, borderRadius: 16, background: 'var(--bg)', border: '2px dashed var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', gap: 8 }}>
+                  <span style={{ fontSize: '1.5rem' }}>📷</span>
+                  <span style={{ fontSize: '0.85rem' }}>Sin foto disponible</span>
+                </div>
+              )}
+            </div>
 
             {/* Bloques de Info */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
               <div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Última ubicación</div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Última ubicación</div>
                 <div style={{ fontSize: '1rem', color: 'var(--text)' }}>{selectedReport.ultimaUbicacion || `${selectedReport.lat.toFixed(4)}, ${selectedReport.lng.toFixed(4)}`}</div>
               </div>
 
               {selectedReport.reportedAt && (
                 <div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>{selectedReport.tipo === 'sobreviviente' ? 'Reportado el' : 'Sin contacto desde'}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>
+                    {selectedReport.tipo === 'sobreviviente' ? 'Reportado el' : 'Sin contacto desde'}
+                  </div>
                   <div style={{ fontSize: '1rem', color: 'var(--text)' }}>
                     {new Date(selectedReport.reportedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </div>
@@ -377,47 +407,38 @@ export default function PublicPage() {
 
               {selectedReport.description && (
                 <div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Descripción y señas</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Descripción y señas</div>
                   <div style={{ fontSize: '1rem', color: 'var(--text)', background: 'var(--bg)', padding: 12, borderRadius: 8 }}>{selectedReport.description}</div>
                 </div>
               )}
 
               {(selectedReport.contactoReportante || selectedReport.telefonoReportante) && (
                 <div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Reporta</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 700 }}>Reporta</div>
                   <div style={{ fontSize: '1rem', color: 'var(--text)' }}>{selectedReport.contactoReportante || 'Anónimo'} {selectedReport.telefonoReportante}</div>
                 </div>
               )}
             </div>
 
-            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 20px 0' }} />
+            <hr style={{ borderTop: '1px solid var(--border)', borderStyle: 'none', margin: '0px 0px 20px' }} />
 
-            {/* Acciones */}
-            <div style={{ marginBottom: 24 }}>
-              {(selectedReport.tipo === 'desaparecido' || selectedReport.tipo === 'mascota') && !selectedReport.encontrado && (
-                <>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--text2)', margin: '0 0 10px 0' }}>Si tienes información de esta persona, actualiza su estado.</p>
-                  <button className="btn btn-block" style={{ background: 'var(--green)', color: '#fff', padding: '14px', borderRadius: 12, fontSize: '1rem' }}
-                          onClick={() => handleUpdateStatus('localizado', true)}>
-                    Marcar como localizada
-                  </button>
-                </>
-              )}
-              {selectedReport.tipo === 'sobreviviente' && (
-                <>
-                  <button className="btn btn-block" style={{ background: 'var(--yellow)', color: '#000', padding: '14px', borderRadius: 12, fontSize: '1rem', marginBottom: 8 }}
-                          onClick={() => handleUpdateStatus('en_proceso', false)}>
-                    En proceso de rescate
-                  </button>
-                  <button className="btn btn-block" style={{ background: 'var(--green)', color: '#fff', padding: '14px', borderRadius: 12, fontSize: '1rem' }}
-                          onClick={() => handleUpdateStatus('rescatado', true)}>
-                    Rescatados
-                  </button>
-                </>
-              )}
+            {/* Acciones de Localización */}
+            <div style={{ marginBottom: '24px' }}>
+              <h3 style={{ fontSize: '1.1rem', margin: '0px 0px 4px' }}>¿Ya lograste comunicarte?</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text2)', margin: '0px 0px 12px' }}>Márcala como localizada y su familia podrá respirar tranquila.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button className="btn btn-block" style={{ background: 'var(--green)', color: 'rgb(255, 255, 255)', padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
+                        onClick={() => handleUpdateStatus('localizado', true)}>
+                  Marcar como localizada
+                </button>
+                <button className="btn btn-block btn-secondary" style={{ padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
+                        onClick={() => handleUpdateStatus('falsa_alarma', false)}>
+                  Reporte Falso / Error
+                </button>
+              </div>
             </div>
 
-            {/* Compartir */}
+            {/* Compartir / Difundir */}
             {(() => {
               const SITE = 'https://hallados.org';
               const nombre = selectedReport.nombre || 'una persona';
@@ -428,28 +449,28 @@ export default function PublicPage() {
               const shareUrl = SITE;
 
               return (
-                <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 12 }}>
-                  <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', fontWeight: 600, textAlign: 'center', color: 'var(--text2)' }}>Compartir este reporte</p>
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                    <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: '#25D366', color: '#fff', border: 'none', fontWeight: 600 }}
-                      onClick={() => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`)}>WhatsApp</button>
-                    <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: '#1877F2', color: '#fff', border: 'none', fontWeight: 600 }}
-                      onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`)}>Facebook</button>
-                    <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: '#14171a', color: '#fff', border: 'none', fontWeight: 600 }}
+                <div style={{ background: 'var(--bg)', padding: '16px', borderRadius: '16px' }}>
+                  <h4 style={{ margin: '0px 0px 12px', fontSize: '1rem', textAlign: 'center' }}>Ayuda a difundir</h4>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+                    <button className="btn btn-sm btn-outline" style={{ borderRadius: '20px', padding: '8px 16px', background: 'rgb(0, 0, 0)', color: 'rgb(255, 255, 255)', borderStyle: 'none' }}
                       onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`)}>X</button>
-                    {navigator.share && (
-                      <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', fontWeight: 600 }}
-                        onClick={() => navigator.share({ title: `Hallados - ${nombre}`, text: shareText, url: shareUrl }).catch(() => {})}>Compartir</button>
-                    )}
-                    <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', fontWeight: 600 }}
+                    <button className="btn btn-sm btn-outline" style={{ borderRadius: '20px', padding: '8px 16px', background: 'rgb(24, 119, 242)', color: 'rgb(255, 255, 255)', borderStyle: 'none' }}
+                      onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`)}>Facebook</button>
+                    <button className="btn btn-sm btn-outline" style={{ borderRadius: '20px', padding: '8px 16px', background: 'linear-gradient(45deg, rgb(240, 148, 51) 0%, rgb(230, 104, 60) 25%, rgb(220, 39, 67) 50%, rgb(204, 35, 102) 75%, rgb(188, 24, 136) 100%)', color: 'rgb(255, 255, 255)', borderStyle: 'none' }}
+                      onClick={() => {
+                        if (navigator.share) {
+                          navigator.share({ title: `Hallados - ${nombre}`, text: shareText, url: shareUrl }).catch(() => {});
+                        } else {
+                          window.open(`https://instagram.com`);
+                        }
+                      }}>Instagram</button>
+                    <button className="btn btn-sm btn-outline" style={{ borderRadius: '20px', padding: '8px 16px', background: 'rgb(255, 255, 255)', color: 'rgb(0, 0, 0)' }}
                       onClick={() => { navigator.clipboard.writeText(shareText); window.alert('Texto copiado'); }}>Copiar</button>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.72rem', cursor: 'pointer' }} onClick={() => handleUpdateStatus('falsa_alarma', false)}>
-                      Reportar error
-                    </button>
-                    <button style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.72rem', cursor: 'pointer' }} onClick={() => { window.alert('Reporte enviado para revisión.'); setSelectedReport(null); }}>
-                      Contenido inapropiado
+                  <div style={{ textAlign: 'center' }}>
+                    <button style={{ background: 'none', borderStyle: 'none', color: 'var(--red)', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer' }}
+                            onClick={() => { window.alert('Reporte enviado para revisión.'); setSelectedReport(null); }}>
+                      Reportar contenido obsceno
                     </button>
                   </div>
                 </div>
