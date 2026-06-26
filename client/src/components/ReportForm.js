@@ -86,14 +86,14 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
 
       {/* ─── GPS ─── */}
       <div className={`gps-section ${gps.active && f.lat ? 'active' : ''}`}>
-        <div className="fw-700 mb-2">📍 Ubicación</div>
+        <div className="fw-700 mb-2">Ubicación</div>
 
         {gps.active && f.lat ? (
           <div>
-            <div className="fw-700" style={{color:'#16a34a'}}>✅ Ubicación detectada</div>
+            <div className="fw-700" style={{color:'#16a34a'}}>Ubicación detectada</div>
             <div className="fs-sm text-gray mt-1">{f.lat}, {f.lng}</div>
             {gps.accuracy && <div className="fs-xs text-gray">Precisión: ±{gps.accuracy}m</div>}
-            <button type="button" className="btn btn-sm btn-outline mt-2" onClick={getGPS}>🔄 Actualizar</button>
+            <button type="button" className="btn btn-sm btn-outline mt-2" onClick={getGPS}>Actualizar</button>
           </div>
         ) : gps.loading ? (
           <div className="flex items-center gap-2" style={{justifyContent:'center'}}>
@@ -102,7 +102,7 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
         ) : (
           <div>
             <button type="button" className="btn btn-secondary btn-block" onClick={getGPS}>
-              📱 Usar GPS del dispositivo
+              Usar GPS del dispositivo
             </button>
             {gps.error && <div className="fs-sm text-red mt-2">{gps.error}</div>}
           </div>
@@ -120,7 +120,7 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
       {/* ─── Foto (solo desaparecidos y mascotas) ─── */}
       {(isDes || isMas) && (
         <div>
-          <div className="fw-700 mb-2">📸 Foto {isMas && '(Recomendada)'}</div>
+          <div className="fw-700 mb-2">Foto {isMas && '(Recomendada)'}</div>
           {fotoPreview ? (
             <div style={{position:'relative',display:'inline-block'}}>
               <img src={fotoPreview} alt="" style={{width:120,height:120,borderRadius:10,objectFit:'cover',border:'2px solid #eee'}} />
@@ -134,7 +134,7 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
               onDrop={onDrop}
               onClick={() => fileRef.current?.click()}
               style={{border:`2px dashed ${dragOver?'#2563eb':'#ddd'}`,borderRadius:12,padding:'20px',textAlign:'center',cursor:'pointer',background:dragOver?'#eff6ff':'#fafafa'}}>
-              <div style={{fontSize:'1.8rem',marginBottom:4}}>📷</div>
+              <div style={{fontSize:'1.8rem',marginBottom:4}}>Seleccionar</div>
               <div className="fs-sm text-gray">Toca para seleccionar foto</div>
               <div className="fs-xs text-gray mt-1">Se comprime automáticamente</div>
             </div>
@@ -155,8 +155,8 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
       ) : isMas ? (
         <>
           <select value={f.encontrado ? 'true' : 'false'} onChange={e => set('encontrado', e.target.value === 'true')}>
-            <option value="false">🐾 Atrapada / Perdida</option>
-            <option value="true">🟢 Encontrada / Rescatada</option>
+            <option value="false">Atrapada / Perdida</option>
+            <option value="true">Encontrada / Rescatada</option>
           </select>
           <input placeholder="Nombre (si lo sabes)" value={f.nombre} onChange={e => set('nombre', e.target.value)} />
           <textarea rows={2} placeholder="Descripción (raza, color, etc) *" value={f.description} onChange={e => set('description', e.target.value)} required style={{resize:'vertical'}} />
@@ -167,9 +167,9 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
           <div className="grid-2">
             <input type="number" min="1" max="999" placeholder="N° personas *" value={f.survivorsCount} onChange={e => set('survivorsCount', e.target.value)} required />
             <select value={f.severity} onChange={e => set('severity', e.target.value)}>
-              <option value="alta">🔴 Alta</option>
-              <option value="media">🟡 Media</option>
-              <option value="baja">🟢 Baja</option>
+              <option value="alta">Alta</option>
+              <option value="media">Media</option>
+              <option value="baja">Baja</option>
             </select>
           </div>
         </>
@@ -184,7 +184,7 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
       <div className="flex gap-2" style={{justifyContent:'flex-end'}}>
         <button type="button" className="btn btn-outline btn-sm" onClick={onCancel}>Cancelar</button>
         <button type="submit" className="btn btn-primary" disabled={submitting}>
-          {submitting ? 'Enviando...' : `${emoji} Reportar`}
+          {submitting ? 'Enviando...' : `Reportar`}
         </button>
       </div>
     </form>

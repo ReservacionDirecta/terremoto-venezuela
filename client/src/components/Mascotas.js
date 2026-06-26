@@ -36,8 +36,8 @@ export default function Mascotas({ reports, onUpdate, readOnly }) {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div className="panel-toolbar" style={{padding:'12px 16px'}}>
         <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <h2 className="fw-700" style={{fontSize:'1.05rem'}}>🐾 Mascotas</h2>
-          <span className="fs-sm text-gray">{reports.length} mascotas · <span style={{color:'#f97316'}}>{noEnc.length} perdidas/atrapadas</span> · <span style={{color:'#16a34a'}}>{enc.length} encontradas</span></span>
+          <h2 className="fw-700" style={{fontSize:'1.05rem'}}>Mascotas Reportadas</h2>
+          <span className="fs-sm text-gray">{reports.length} reportes · <span style={{color:'#f97316'}}>{noEnc.length} perdidas</span> · <span style={{color:'#16a34a'}}>{enc.length} rescatadas</span></span>
         </div>
         <input type="text" placeholder="Buscar por descripción o ubicación..." value={q} onChange={e => setQ(e.target.value)}
                style={{maxWidth:400}} />
@@ -86,29 +86,29 @@ function MasCard({ r, onMarcar, onFoto, fotos, setFotos }) {
   return (
     <div className="card" style={{borderLeft:`4px solid ${bc}`,display:'flex',gap:12,position:'relative'}}>
       <span className="badge" style={{position:'absolute',top:10,right:10,background:isF?'#f0fdf4':'#fff7ed',color:bc}}>
-        {isF ? '🟢 Encontrada' : '🐾 Atrapada / Perdida'}
+        {isF ? 'Rescatada' : 'Perdida'}
       </span>
 
       <div style={{flexShrink:0}}>
         {r.hasFoto ? (
           loading ? <div className="foto-skeleton"/> :
           fotoUrl ? <img src={fotoUrl} alt="" className="foto-thumb" onClick={() => onFoto({foto:fotoUrl,nombre:r.nombre})} /> :
-          <div className="foto-placeholder">{err ? '⚠️' : '🐶'}</div>
-        ) : <div className="foto-placeholder">🐶</div>}
+          <div className="foto-placeholder"></div>
+        ) : <div className="foto-placeholder"></div>}
       </div>
 
       <div style={{flex:1,minWidth:0}}>
         <h3 style={{fontSize:'0.95rem',fontWeight:700,margin:'0 110px 2px 0'}}>{r.nombre || 'Mascota sin nombre'}</h3>
         <p className="fs-sm mt-1">{r.description}</p>
-        <p className="fs-xs mt-1" style={{color:'#666'}}>📍 {r.ultimaUbicacion||`${r.lat.toFixed(4)}, ${r.lng.toFixed(4)}`}</p>
+        <p className="fs-sm mt-1">{r.ultimaUbicacion||`${r.lat.toFixed(4)}, ${r.lng.toFixed(4)}`}</p>
         <div className="flex gap-2 mt-2 flex-wrap">
-          <a href={`https://maps.google.com?q=${r.lat},${r.lng}`} target="_blank" rel="noreferrer" className="fs-xs" style={{color:'#2563eb'}}>📍 Maps</a>
-          {fotoUrl && <button onClick={() => onFoto({foto:fotoUrl,nombre:r.nombre})} className="fs-xs" style={{background:'none',border:'none',color:'#2563eb',cursor:'pointer'}}>🔍 Ver foto</button>}
+          <a href={`https://maps.google.com?q=${r.lat},${r.lng}`} target="_blank" rel="noreferrer" className="fs-xs" style={{color:'#f97316'}}>Maps</a>
+          {fotoUrl && <button onClick={() => onFoto({foto:fotoUrl,nombre:r.nombre})} className="fs-xs" style={{background:'none',border:'none',color:'#f97316',cursor:'pointer'}}>Ver foto</button>}
         </div>
         {onMarcar && (
           <button className="btn btn-sm mt-2 w-full" style={{background:isF ? '#fff' : 'var(--green-bg)',color:isF ? '#dc2626' : 'var(--green)',border:`1px solid ${isF ? '#dc2626' : 'var(--green)'}`,width:'100%'}}
                   onClick={() => onMarcar(r._id, !isF)}>
-            {isF ? '❌ Marcar como perdida' : '🟢 Marcar Encontrada'}
+            {isF ? 'Marcar como perdida' : 'Marcar Rescatada'}
           </button>
         )}
         <FlagButton id={r._id} currentFlags={r.flags} />
@@ -139,7 +139,7 @@ function FlagButton({ id, currentFlags }) {
               background: 'none', border: 'none', cursor: flagged ? 'default' : 'pointer',
               color: flagged ? '#16a34a' : '#999', textAlign: 'right'
             }}>
-      {flagged ? '✅ Reportado' : `🚩 ${count > 0 ? `Reportar error (${count})` : 'Reportar error'}`}
+      {flagged ? 'Reportado' : `Reportar error ${count > 0 ? `(${count})` : ''}`}
     </button>
   );
 }

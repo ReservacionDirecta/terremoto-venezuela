@@ -8,6 +8,7 @@ import Sobrevivientes from './components/Sobrevivientes';
 import Mascotas from './components/Mascotas';
 import LeyendaEmergencia from './components/LeyendaEmergencia';
 import GuiaUso from './components/GuiaUso';
+import LoginPage from './LoginPage';
 import { createReport, fetchReports, fetchCriticalZones } from './api';
 
 export default function PublicPage() {

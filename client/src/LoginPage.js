@@ -22,14 +22,14 @@ export default function LoginPage({ onLogin, onBack }) {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="topbar">
-        <h1>🇻🇪 Acceso Super Admin</h1>
+        <h1>Acceso Super Admin</h1>
         {onBack && <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent'}}
                          onClick={onBack}>← Volver</button>}
       </div>
 
       <div className="page" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <div className="card" style={{ maxWidth: 400, margin: '0 auto', width: '100%' }}>
-          <h2 className="fw-700 mb-3">🔒 Iniciar Sesión</h2>
+          <h2 className="fw-700 mb-3">Iniciar Sesión</h2>
           <p className="fs-sm text-gray mb-4">Solo personal autorizado.</p>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -52,7 +52,7 @@ export default function LoginPage({ onLogin, onBack }) {
             )}
 
             <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
-              {loading ? '⏳ Verificando...' : 'Ingresar'}
+              {loading ? 'Verificando...' : 'Ingresar'}
             </button>
           </form>
         </div>
