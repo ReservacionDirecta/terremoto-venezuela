@@ -9,7 +9,7 @@ import Mascotas from './components/Mascotas';
 import LeyendaEmergencia from './components/LeyendaEmergencia';
 import GuiaUso from './components/GuiaUso';
 import LoginPage from './LoginPage';
-import { createReport, fetchReports, fetchCriticalZones, updateReport } from './api';
+import { createReport, fetchReports, fetchCriticalZones, updateReport, searchReports } from './api';
 
 export default function PublicPage() {
   const { dark, toggle } = useTheme();
@@ -23,6 +23,10 @@ export default function PublicPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
+  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const loadPublicData = useCallback(async () => {
     setLoading(true);
@@ -46,6 +50,18 @@ export default function PublicPage() {
       loadPublicData();
     }
   }, []); // eslint-disable-line
+
+  const doSearch = useCallback(async () => {
+    if (!searchQuery.trim()) { setSearchResults(null); return; }
+    setIsSearching(true);
+    try { setSearchResults(await searchReports(searchQuery.trim())); } catch {}
+    finally { setIsSearching(false); }
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const t = setTimeout(() => searchQuery.trim() ? doSearch() : setSearchResults(null), 400);
+    return () => clearTimeout(t);
+  }, [searchQuery, doSearch]);
 
   const handleSubmit = async (data) => {
     try {
@@ -118,26 +134,61 @@ export default function PublicPage() {
               {loading && reports.length === 0 ? (
                 <div className="empty-state"><div className="spinner" style={{margin:'20px auto'}}/></div>
               ) : (
-                <HeatmapView reports={reports} criticalZones={zones} filter="all" onFilterChange={() => {}} onReportClick={setSelectedReport} compact />
+                <HeatmapView reports={reports} criticalZones={zones} filter="all" onFilterChange={() => {}} onReportClick={setSelectedReport} selectedReport={selectedReport} compact />
               )}
             </div>
             <div className="list-half">
-              <h3 className="fs-sm fw-700 text-gray mb-2">Últimos reportes</h3>
-              {recentReports.length === 0 ? (
-                <p className="fs-xs text-muted">No hay reportes recientes.</p>
-              ) : (
-                recentReports.map(r => (
-                  <div key={r._id} className="recent-card" 
-                       onClick={() => setSelectedReport(r)}
-                       style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`, cursor: 'pointer' }}>
-                    <div style={{ flex: 1 }}>
-                      <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
-                      <div className="fs-xs text-gray mt-1">
-                        {r.ultimaUbicacion || 'Ubicación marcada'}
+              <div style={{ marginBottom: 15 }}>
+                <input 
+                  type="text" 
+                  placeholder="🔍 Buscar por nombre, CI/DNI, teléfono..." 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}
+                />
+              </div>
+
+              {searchQuery.trim() ? (
+                <>
+                  <h3 className="fs-sm fw-700 text-gray mb-2">Resultados de Búsqueda {isSearching && <span className="spinner" style={{width:12,height:12,marginLeft:6,borderWidth:2,display:'inline-block'}}/>}</h3>
+                  {searchResults && searchResults.length === 0 ? (
+                    <p className="fs-xs text-muted">No se encontraron resultados.</p>
+                  ) : (
+                    (searchResults || []).map(r => (
+                      <div key={r._id} className="recent-card" 
+                           onClick={() => setSelectedReport(r)}
+                           style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`, cursor: 'pointer' }}>
+                        <div style={{ flex: 1 }}>
+                          <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
+                          <div className="fs-xs text-gray mt-1">
+                            {r.identificacion && <span style={{display:'block',color:'#666'}}>CI/DNI: {r.identificacion}</span>}
+                            {r.ultimaUbicacion || 'Ubicación marcada'}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))
+                    ))
+                  )}
+                </>
+              ) : (
+                <>
+                  <h3 className="fs-sm fw-700 text-gray mb-2">Últimos reportes</h3>
+                  {recentReports.length === 0 ? (
+                    <p className="fs-xs text-muted">No hay reportes recientes.</p>
+                  ) : (
+                    recentReports.map(r => (
+                      <div key={r._id} className="recent-card" 
+                           onClick={() => setSelectedReport(r)}
+                           style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`, cursor: 'pointer' }}>
+                        <div style={{ flex: 1 }}>
+                          <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
+                          <div className="fs-xs text-gray mt-1">
+                            {r.ultimaUbicacion || 'Ubicación marcada'}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -249,7 +300,10 @@ export default function PublicPage() {
                 <p style={{ margin: '4px 0', fontSize: '1.05rem' }}><strong>Nombre:</strong> {selectedReport.nombre || 'Desconocido'}</p>
               )}
               {(selectedReport.tipo === 'desaparecido') && (
-                <p style={{ margin: '4px 0' }}><strong>Edad:</strong> {selectedReport.edad || 'N/A'}</p>
+                <>
+                  {selectedReport.identificacion && <p style={{ margin: '4px 0' }}><strong>CI/DNI:</strong> {selectedReport.identificacion}</p>}
+                  <p style={{ margin: '4px 0' }}><strong>Edad:</strong> {selectedReport.edad || 'N/A'}</p>
+                </>
               )}
               {(selectedReport.tipo === 'sobreviviente') && (
                 <p style={{ margin: '4px 0' }}><strong>Personas Atrapadas:</strong> {selectedReport.survivorsCount || 1}</p>

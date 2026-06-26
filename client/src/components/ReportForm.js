@@ -3,7 +3,7 @@ import React, { useState, useRef, useCallback } from 'react';
 export default function ReportForm({ tipo, onSubmit, onCancel }) {
   const isDes = tipo === 'desaparecido';
   const isMas = tipo === 'mascota';
-  const [f, setF] = useState({ lat:'', lng:'', nombre:'', edad:'', ultimaUbicacion:'', description:'', survivorsCount:'', severity:'alta', contactoReportante:'', telefonoReportante:'', encontrado: false });
+  const [f, setF] = useState({ lat:'', lng:'', nombre:'', identificacion: '', edad:'', ultimaUbicacion:'', description:'', survivorsCount:'', severity:'alta', contactoReportante:'', telefonoReportante:'', encontrado: false });
   const [submitting, setSubmitting] = useState(false);
   const [gps, setGps] = useState({ active: false, loading: false, error: '' });
   const [foto, setFoto] = useState(null);
@@ -66,7 +66,7 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
     try {
       await onSubmit({
         tipo, lat: parseFloat(f.lat), lng: parseFloat(f.lng),
-        nombre: f.nombre, edad: f.edad ? parseInt(f.edad) : undefined,
+        nombre: f.nombre, identificacion: f.identificacion, edad: f.edad ? parseInt(f.edad) : undefined,
         ultimaUbicacion: f.ultimaUbicacion, description: f.description,
         survivorsCount: f.survivorsCount ? parseInt(f.survivorsCount) : undefined,
         severity: isDes || isMas ? undefined : f.severity,
@@ -147,6 +147,7 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
       {isDes ? (
         <>
           <input placeholder="Nombre completo *" value={f.nombre} onChange={e => set('nombre', e.target.value)} required />
+          <input placeholder="Documento de Identidad (CI/DNI)" value={f.identificacion} onChange={e => set('identificacion', e.target.value)} />
           <div className="grid-2">
             <input type="number" min="0" max="120" placeholder="Edad" value={f.edad} onChange={e => set('edad', e.target.value)} />
             <input placeholder="Última ubicación" value={f.ultimaUbicacion} onChange={e => set('ultimaUbicacion', e.target.value)} />

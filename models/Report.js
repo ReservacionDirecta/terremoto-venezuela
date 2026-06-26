@@ -12,7 +12,11 @@ const reportSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: 200
-    // requerido solo si tipo='desaparecido' (validado en ruta)
+  },
+  identificacion: {
+    type: String,
+    trim: true,
+    maxlength: 100
   },
   edad: {
     type: Number,

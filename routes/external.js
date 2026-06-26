@@ -141,4 +141,24 @@ router.get('/counts', async (req, res) => {
   }
 });
 
+// ─── GET /api/external/image?url= — proxy de imágenes externas ───
+router.get('/image', async (req, res) => {
+  try {
+    const url = req.query.url;
+    if (!url || !url.startsWith('https://reconexion-api-images')) {
+      return res.status(400).json({ error: 'URL inválida' });
+    }
+    https.get(url, { timeout: 10000 }, (imgRes) => {
+      if (imgRes.statusCode !== 200) {
+        return res.status(404).json({ error: 'Imagen no disponible' });
+      }
+      res.setHeader('Content-Type', imgRes.headers['content-type'] || 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      imgRes.pipe(res);
+    }).on('error', () => res.status(500).json({ error: 'Error al obtener imagen' }));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

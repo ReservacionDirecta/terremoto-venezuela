@@ -11,7 +11,7 @@ L.Icon.Default.mergeOptions({
 const EPI = [10.35, -68.62];
 const sevColors = { alta:'#dc2626', media:'#eab308', baja:'#2563eb' };
 
-export default function HeatmapView({ reports, criticalZones, filter, onFilterChange, onReportClick, compact }) {
+export default function HeatmapView({ reports, criticalZones, filter, onFilterChange, onReportClick, selectedReport, compact }) {
   const mapRef = useRef(null);
   const heatRef = useRef(null);
   const markersRef = useRef(null);
@@ -25,6 +25,16 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState(null);
+
+  useEffect(() => {
+    if (selectedReport && mapRef.current) {
+      const lat = selectedReport.lat || selectedReport.location?.coordinates?.[1];
+      const lng = selectedReport.lng || selectedReport.location?.coordinates?.[0];
+      if (lat && lng) {
+        mapRef.current.flyTo([lat, lng], 18, { duration: 1.5 });
+      }
+    }
+  }, [selectedReport]);
 
   // ... useEffects keep the same
 

@@ -362,12 +362,19 @@ router.get('/search', async (req, res) => {
     const { q } = req.query;
     if (!q?.trim()) return res.status(400).json({ error: 'Parámetro q requerido' });
 
-    const reports = await Report.find(
-      { $text: { $search: q.trim() } },
-      { score: { $meta: 'textScore' } }
-    )
+    const regex = new RegExp(q.trim(), 'i');
+    const reports = await Report.find({
+      $or: [
+        { nombre: regex },
+        { identificacion: regex },
+        { ultimaUbicacion: regex },
+        { description: regex },
+        { telefonoReportante: regex },
+        { contactoReportante: regex }
+      ]
+    })
     .select('-foto -fotoContentType')
-    .sort({ score: { $meta: 'textScore' } })
+    .sort({ reportedAt: -1 })
     .limit(50)
     .lean();
 

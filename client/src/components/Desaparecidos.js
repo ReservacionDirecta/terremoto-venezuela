@@ -90,8 +90,8 @@ function DesCard({ r, onMarcar, onFoto, fotos, setFotos }) {
 
       <div style={{flexShrink:0}}>
         {r.fotoExterna ? (
-          <img src={r.fotoExterna} alt="" className="foto-thumb"
-               onClick={() => onFoto({foto:r.fotoExterna,nombre:r.nombre})}
+          <img src={'/api/external/image?url=' + encodeURIComponent(r.fotoExterna)} alt="" className="foto-thumb"
+               onClick={() => onFoto({foto:'/api/external/image?url=' + encodeURIComponent(r.fotoExterna),nombre:r.nombre})}
                onError={e => { e.target.style.display='none'; }} />
         ) : r.hasFoto ? (
           loading ? <div className="foto-skeleton"/> :
