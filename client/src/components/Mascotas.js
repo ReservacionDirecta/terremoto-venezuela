@@ -28,20 +28,21 @@ export default function Mascotas({ reports, onUpdate, readOnly }) {
 
   // Filtramos por tipo mascota para asegurarnos
   const displayed = (results || reports).filter(r => r.tipo === 'mascota');
-  const noEnc = displayed.filter(r => !r.encontrado);
-  const enc = displayed.filter(r => r.encontrado);
-  const pct = reports.length ? Math.round((enc.length/reports.length)*100) : 0;
+  const allMascotas = reports.filter(r => r.tipo === 'mascota');
+  const noEnc = allMascotas.filter(r => !r.encontrado);
+  const enc = allMascotas.filter(r => r.encontrado);
+  const pct = allMascotas.length ? Math.round((enc.length/allMascotas.length)*100) : 0;
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div className="panel-toolbar" style={{padding:'12px 16px'}}>
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <h2 className="fw-700" style={{fontSize:'1.05rem'}}>Mascotas Reportadas</h2>
-          <span className="fs-sm text-gray">{reports.length} reportes · <span style={{color:'#f97316'}}>{noEnc.length} perdidas</span> · <span style={{color:'#16a34a'}}>{enc.length} rescatadas</span></span>
+          <span className="fs-sm text-gray">{allMascotas.length} reportes · <span style={{color:'#f97316'}}>{noEnc.length} perdidas</span> · <span style={{color:'#16a34a'}}>{enc.length} rescatadas</span></span>
         </div>
         <input type="text" placeholder="Buscar por descripción o ubicación..." value={q} onChange={e => setQ(e.target.value)}
                style={{maxWidth:400}} />
-        {reports.length > 0 && (
+        {allMascotas.length > 0 && (
           <div className="mt-2">
             <div className="flex justify-between fs-xs text-gray mb-1"><span>Rescatadas</span><span>{pct}%</span></div>
             <div className="progress"><div className="progress-fill" style={{width:`${pct}%`,background:'linear-gradient(90deg,#f97316,#16a34a)'}}/></div>
@@ -52,7 +53,7 @@ export default function Mascotas({ reports, onUpdate, readOnly }) {
       <div className="overflow-auto" style={{flex:1,padding:'12px 16px'}}>
         {displayed.length === 0 && <div className="empty-state">{q ? 'Sin resultados' : 'No hay mascotas reportadas'}</div>}
         <div className="grid-cards">
-          {[...noEnc, ...enc].map(r => (
+          {[...displayed.filter(r => !r.encontrado), ...displayed.filter(r => r.encontrado)].map(r => (
             <MasCard key={r._id} r={r} onMarcar={readOnly ? null : marcar} onFoto={setLightbox} fotos={fotos} setFotos={setFotos} />
           ))}
         </div>

@@ -27,8 +27,8 @@ export default function Desaparecidos({ reports, onUpdate, readOnly }) {
   };
 
   const displayed = results || reports;
-  const noEnc = displayed.filter(r => !r.encontrado);
-  const enc = displayed.filter(r => r.encontrado);
+  const noEnc = reports.filter(r => !r.encontrado);
+  const enc = reports.filter(r => r.encontrado);
   const pct = reports.length ? Math.round((enc.length/reports.length)*100) : 0;
 
   return (
@@ -51,7 +51,7 @@ export default function Desaparecidos({ reports, onUpdate, readOnly }) {
       <div className="overflow-auto" style={{flex:1,padding:'12px 16px'}}>
         {displayed.length === 0 && <div className="empty-state">{q ? 'Sin resultados' : 'No hay desaparecidos reportados'}</div>}
         <div className="grid-cards">
-          {[...noEnc, ...enc].map(r => (
+          {[...displayed.filter(r => !r.encontrado), ...displayed.filter(r => r.encontrado)].map(r => (
             <DesCard key={r._id} r={r} onMarcar={readOnly ? null : marcar} onFoto={setLightbox} fotos={fotos} setFotos={setFotos} />
           ))}
         </div>

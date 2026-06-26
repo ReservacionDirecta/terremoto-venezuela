@@ -218,11 +218,19 @@ select {
   background-color: #111827 !important;
   font-family: inherit;
 }
+.leaflet-top.leaflet-left {
+  /* Shift zoom controls to bottom left to avoid top search bar overlap */
+  top: auto !important;
+  bottom: calc(76px + env(safe-area-inset-bottom)) !important;
+  left: 12px !important;
+}
 .leaflet-control-zoom {
   border: none !important;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
   border-radius: 12px !important;
   overflow: hidden;
+  margin-left: 0 !important;
+  margin-bottom: 0 !important;
 }
 .leaflet-control-zoom a {
   background-color: var(--card) !important;

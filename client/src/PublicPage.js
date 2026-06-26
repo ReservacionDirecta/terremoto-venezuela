@@ -121,6 +121,62 @@ export default function PublicPage() {
       .finally(() => setLoadingPhoto(false));
   }, [selectedReport]);
 
+  const renderFooter = () => (
+    <div style={{
+      background: 'var(--bg2)',
+      padding: '32px 20px',
+      borderTop: '1px solid var(--border)',
+      fontSize: '0.8rem',
+      color: 'var(--text2)',
+      lineHeight: '1.5',
+      marginTop: '24px'
+    }}>
+      <div style={{ maxWidth: 500, margin: '0 auto', textAlign: 'left' }}>
+        <p style={{ marginBottom: 20, color: 'var(--text3)' }}>
+          Esta plataforma ha sido creada de manera voluntaria por venezolanos dentro y fuera del país para apoyar la búsqueda de personas desaparecidas tras el terremoto en Venezuela. No solicitamos ni gestionamos dinero, donaciones ni ayudas de ningún tipo. Nuestro único objetivo es facilitar la recopilación y organización de información que pueda contribuir a su localización.
+        </p>
+        
+        <h4 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: 12, borderBottom: '2px solid var(--border)', paddingBottom: 6 }}>
+          Teléfonos de emergencia · Caracas
+        </h4>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: 20, fontSize: '0.78rem' }}>
+          <div><strong>171 / 911</strong></div>
+          <div style={{ textAlign: 'right', color: 'var(--text3)' }}>Emergencias principal</div>
+          
+          <div><strong>*1 / 112</strong></div>
+          <div style={{ textAlign: 'right', color: 'var(--text3)' }}>Movilnet / Digitel / Movistar</div>
+          
+          <div><strong>Aeroambulancias</strong></div>
+          <div style={{ textAlign: 'right', color: 'var(--text3)' }}>(0212) 993.25.41 / 992.89.80</div>
+          
+          <div><strong>Rescarven</strong></div>
+          <div style={{ textAlign: 'right', color: 'var(--text3)' }}>(0212) 993.69.11 / 993.13.10</div>
+          
+          <div><strong>Ambulancia Metropolitano</strong></div>
+          <div style={{ textAlign: 'right', color: 'var(--text3)' }}>(0212) 545.45.45 / 577.92.09</div>
+        </div>
+
+        <div style={{ fontSize: '0.78rem', color: 'var(--text3)', borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+          <p style={{ marginBottom: 12 }}>
+            <strong>Desaparecidos Terremoto Venezuela</strong> — Esta es una herramienta ciudadana y no partidista. Ante una emergencia médica, llama a los organismos de rescate. Verifica siempre la información antes de difundirla.
+          </p>
+          <p style={{ fontStyle: 'italic' }}>
+            ¿Encontraste un problema en el sitio? Escríbenos a <a href="mailto:soporte@hallados.org" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>soporte@hallados.org</a>
+          </p>
+        </div>
+
+        <div style={{ textAlign: 'center', marginTop: 24, fontSize: '0.7rem', color: 'var(--muted)' }}>
+          hecho con amor por{' '}
+          <a href="https://chamba.digital" target="_blank" rel="noopener noreferrer"
+             style={{ color: 'var(--text3)', fontWeight: 700, textDecoration: 'none' }}>
+            chamba.digital
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+
   if (showLogin) return <LoginPage onLogin={() => window.location.reload()} onBack={() => setShowLogin(false)} />;
 
   return (
@@ -202,6 +258,7 @@ export default function PublicPage() {
                 </button>
               </div>
             </div>
+            {renderFooter()}
           </div>
         )}
 
@@ -218,7 +275,7 @@ export default function PublicPage() {
                       style={{padding:'12px',background:'transparent',border:'none',cursor:'pointer',borderBottom:dirTab==='sob'?'2px solid var(--red)':'none',color:dirTab==='sob'?'var(--red)':'var(--text3)'}} 
                       onClick={()=>setDirTab('sob')}>Sobrevivientes</button>
             </div>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
               {loading && reports.length === 0 ? (
                 <div className="empty-state"><div className="spinner" style={{margin:'40px auto'}}/></div>
               ) : dirTab === 'des' ? (
@@ -228,6 +285,7 @@ export default function PublicPage() {
               ) : (
                 <Sobrevivientes reports={reports.filter(r => r.tipo === 'sobreviviente')} readOnly />
               )}
+              {renderFooter()}
             </div>
           </div>
         )}
@@ -235,69 +293,14 @@ export default function PublicPage() {
         {tab === 'guia' && (
           <div className="overflow-auto h-full">
             <GuiaUso />
+            {renderFooter()}
           </div>
         )}
 
         {tab === 'emergencia' && (
           <div className="overflow-auto h-full">
             <LeyendaEmergencia />
-          </div>
-        )}
-
-        {/* Footer credit - visible on scrollable tabs */}
-        {tab !== 'inicio' && (
-          <div style={{
-            background: 'var(--bg2)',
-            padding: '32px 20px',
-            borderTop: '1px solid var(--border)',
-            fontSize: '0.8rem',
-            color: 'var(--text2)',
-            lineHeight: '1.5',
-            marginTop: 'auto'
-          }}>
-            <div style={{ maxWidth: 500, margin: '0 auto', textAlign: 'left' }}>
-              <p style={{ marginBottom: 20, color: 'var(--text3)' }}>
-                Esta plataforma ha sido creada de manera voluntaria por venezolanos dentro y fuera del país para apoyar la búsqueda de personas desaparecidas tras el terremoto en Venezuela. No solicitamos ni gestionamos dinero, donaciones ni ayudas de ningún tipo. Nuestro único objetivo es facilitar la recopilación y organización de información que pueda contribuir a su localización.
-              </p>
-              
-              <h4 style={{ fontSize: '0.9rem', fontWeight: 800, marginBottom: 12, borderBottom: '2px solid var(--border)', paddingBottom: 6 }}>
-                Teléfonos de emergencia · Caracas
-              </h4>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: 20, fontSize: '0.78rem' }}>
-                <div><strong>171 / 911</strong></div>
-                <div style={{ textAlign: 'right', color: 'var(--text3)' }}>Emergencias principal</div>
-                
-                <div><strong>*1 / 112</strong></div>
-                <div style={{ textAlign: 'right', color: 'var(--text3)' }}>Movilnet / Digitel / Movistar</div>
-                
-                <div><strong>Aeroambulancias</strong></div>
-                <div style={{ textAlign: 'right', color: 'var(--text3)' }}>(0212) 993.25.41 / 992.89.80</div>
-                
-                <div><strong>Rescarven</strong></div>
-                <div style={{ textAlign: 'right', color: 'var(--text3)' }}>(0212) 993.69.11 / 993.13.10</div>
-                
-                <div><strong>Ambulancia Metropolitano</strong></div>
-                <div style={{ textAlign: 'right', color: 'var(--text3)' }}>(0212) 545.45.45 / 577.92.09</div>
-              </div>
-
-              <div style={{ fontSize: '0.78rem', color: 'var(--text3)', borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                <p style={{ marginBottom: 12 }}>
-                  <strong>Desaparecidos Terremoto Venezuela</strong> — Esta es una herramienta ciudadana y no partidista. Ante una emergencia médica, llama a los organismos de rescate. Verifica siempre la información antes de difundirla.
-                </p>
-                <p style={{ fontStyle: 'italic' }}>
-                  ¿Encontraste un problema en el sitio? Escríbenos a <a href="mailto:soporte@chamba.digital" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>soporte@chamba.digital</a>
-                </p>
-              </div>
-
-              <div style={{ textAlign: 'center', marginTop: 24, fontSize: '0.7rem', color: 'var(--muted)' }}>
-                hecho con amor por{' '}
-                <a href="https://chamba.digital" target="_blank" rel="noopener noreferrer"
-                   style={{ color: 'var(--text3)', fontWeight: 700, textDecoration: 'none' }}>
-                  chamba.digital
-                </a>
-              </div>
-            </div>
+            {renderFooter()}
           </div>
         )}
       </div>
