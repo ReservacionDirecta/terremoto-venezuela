@@ -2,7 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Report = require('./models/Report');
 
-const URI=proces...NGO_PUBLIC_URL;
+const URI=process.env.MONGO_PUBLIC_URL;
 if (!URI) { console.error('No MONGO_URL'); process.exit(1); }
 
 const reports = [

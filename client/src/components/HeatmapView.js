@@ -26,6 +26,7 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showChipBar, setShowChipBar] = useState(false); // By default hide to save space
 
   useEffect(() => {
     if (selectedReport && mapRef.current) {
@@ -236,28 +237,37 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
 
       {/* Panel de Filtros Tácticos Flotante (Chips) */}
       <div style={{
-        position:'absolute', top: 70, left: 10, right: 10, zIndex: 900,
-        display:'flex', flexDirection:'column', gap: 8
+        position:'absolute', top: 70, right: 10, left: showChipBar ? 10 : 'auto', zIndex: 900,
+        display:'flex', flexDirection:'column', gap: 8, alignItems: showChipBar ? 'stretch' : 'flex-end'
       }}>
-        <div style={{ display: 'flex', overflowX: 'auto', gap: 8, paddingBottom: 4, scrollbarWidth: 'none' }} className="chips-container">
-          {filters.map(x => (
-            <button key={x.k}
-                    className={`btn btn-sm ${tactical.tipo===x.k?'btn-primary':'btn-outline'}`}
-                    onClick={() => {
-                      setTactical({...tactical, tipo: x.k});
-                      if (onFilterChange) onFilterChange(x.k);
-                    }} style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: tactical.tipo===x.k?'var(--red)':'var(--card)', color: tactical.tipo===x.k?'#fff':'var(--text)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-              {x.l}
-            </button>
-          ))}
-          <button className="btn btn-sm btn-outline" 
-                  onClick={() => setShowFilters(!showFilters)} 
-                  style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: showFilters?'#e2e8f0':'var(--card)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-            ⚙️ Filtros
+        {!showChipBar ? (
+          <button className="btn btn-outline" onClick={() => setShowChipBar(true)} style={{ background: 'var(--card)', borderRadius: 20, padding: '8px 12px', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', display: 'flex', gap: 6, alignItems: 'center', fontWeight: 'bold' }}>
+            <span>🔽 Filtros del Mapa</span>
           </button>
-        </div>
-        
-        {showFilters && (
+        ) : (
+          <>
+            <div style={{ display: 'flex', overflowX: 'auto', gap: 8, paddingBottom: 4, scrollbarWidth: 'none', width: '100%' }} className="chips-container">
+              <button className="btn btn-sm btn-outline" onClick={() => { setShowChipBar(false); setShowFilters(false); }} style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: 'var(--card)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+                ✖ Ocultar
+              </button>
+              {filters.map(x => (
+                <button key={x.k}
+                        className={`btn btn-sm ${tactical.tipo===x.k?'btn-primary':'btn-outline'}`}
+                        onClick={() => {
+                          setTactical({...tactical, tipo: x.k});
+                          if (onFilterChange) onFilterChange(x.k);
+                        }} style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: tactical.tipo===x.k?'var(--red)':'var(--card)', color: tactical.tipo===x.k?'#fff':'var(--text)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+                  {x.l}
+                </button>
+              ))}
+              <button className="btn btn-sm btn-outline" 
+                      onClick={() => setShowFilters(!showFilters)} 
+                      style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: showFilters?'#e2e8f0':'var(--card)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+                ⚙️ Avanzados
+              </button>
+            </div>
+            
+            {showFilters && (
           <div style={{ background: 'var(--card)', padding: 12, borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <label className="flex items-center gap-1 fs-xs" style={{cursor:'pointer', width: '100%', marginBottom: 4, fontWeight: 'bold'}}>
               <input type="checkbox" checked={showMarkers} onChange={e=>setShowMarkers(e.target.checked)}/> Mostrar puntos individuales
@@ -282,6 +292,8 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
               <option value="en_proceso">En Proceso</option>
             </select>
           </div>
+        )}
+          </>
         )}
       </div>
       <div className="legend">
