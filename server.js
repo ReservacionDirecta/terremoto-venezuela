@@ -98,6 +98,33 @@ mongoose.connect(MONGO_URI, mongoOpts).then(async () => {
   const adminPass = process.env.ADMIN_PASS || 'terremoto2026';
   await User.createSuperAdmin(adminUser, adminPass);
   console.log(`🔑 Admin: ${adminUser} / ${adminPass}`);
+
+  // ─── Cron: sincronizar cada 3 horas ──────────
+  cron.schedule('0 */3 * * *', async () => {
+    console.log('⏰ Cron: iniciando sincronización...');
+    try {
+      await syncExternal({ maxPages: 8, log: console.log });
+    } catch (err) {
+      console.error('❌ Cron error:', err.message);
+    }
+  });
+  console.log('⏰ Cron: sincronización cada 3 horas');
+
+  // ─── Endpoint manual de sync ──────────────────
+  app.post('/api/cron/sync', async (_req, res) => {
+    try {
+      const result = await syncExternal({ maxPages: 10, log: console.log });
+      res.json({ success: true, ...result });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ─── Sincronización inicial (arranque) ───────
+  syncExternal({ maxPages: 5, log: console.log })
+    .then(r => console.log(`🔄 Sync inicial: +${r.imported} nuevos`))
+    .catch(e => console.error('Sync inicial:', e.message));
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor optimizado en http://localhost:${PORT}`);
   });
