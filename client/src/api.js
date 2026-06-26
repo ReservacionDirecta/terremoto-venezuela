@@ -38,11 +38,19 @@ export async function verifyToken() {
 }
 
 // ─── Reports (públicos - sin auth) ─────────────
-export async function fetchReports(tipo, encontrado) {
+export async function fetchReports(tipo, encontrado, page = 1, limit = 500) {
   const params = new URLSearchParams();
   if (tipo) params.set('tipo', tipo);
   if (encontrado !== undefined) params.set('encontrado', encontrado);
+  params.set('page', page);
+  params.set('limit', limit);
   return request('/api/reports?' + params);
+}
+
+// Endpoint ligero para el mapa (solo lat/lng/tipo)
+export async function fetchMapData(tipo) {
+  const params = tipo ? '?tipo=' + tipo : '';
+  return request('/api/reports/map' + params);
 }
 export async function createReport(data) {
   return request('/api/reports', { method: 'POST', body: data });

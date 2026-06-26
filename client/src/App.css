@@ -206,24 +206,79 @@ select {
 .progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
 
 /* ─── Map ─── */
-.map-wrap { position: relative; height: 100%; min-height: 300px; }
+.map-wrap {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  background: #111827; /* Dark backdrop before map loads */
+}
 
-/* ─── Legend ─── */
+/* Uber/Google Maps styling overrides for Leaflet */
+.leaflet-container {
+  background-color: #111827 !important;
+  font-family: inherit;
+}
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+.leaflet-control-zoom a {
+  background-color: var(--card) !important;
+  color: var(--text) !important;
+  border-bottom: 1px solid var(--border) !important;
+  transition: background 0.15s;
+}
+.leaflet-control-zoom a:hover {
+  background-color: var(--bg3) !important;
+}
+
+/* Floating Search Bar container on Map */
+.floating-search-bar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  z-index: 950;
+  max-width: 480px;
+  margin: 0 auto;
+  pointer-events: auto;
+}
+
+/* Legend ─── */
 .legend {
-  position: absolute; bottom: 16px; right: 10px; z-index: 150;
-  background: rgba(255,255,255,0.92); padding: 6px 10px;
-  border-radius: 12px; border: none;
-  font-size: 0.68rem; color: var(--text2);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  position: absolute;
+  bottom: calc(76px + env(safe-area-inset-bottom));
+  right: 12px;
+  z-index: 900;
+  background: var(--card);
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 0.72rem;
+  color: var(--text2);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
 }
-[data-theme="dark"] .legend { background: rgba(30,41,59,0.9); }
+[data-theme="dark"] .legend {
+  background: rgba(30, 41, 59, 0.85);
+}
 .legend-bar {
-  width: 100px; height: 6px; border-radius: 3px;
-  background: linear-gradient(to right, #00c853, #ffd600, #ff6d00, #d50000);
-  margin: 3px 0;
+  width: 90px;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #00c853, #ffd600, #ff6d00, #b91c1c);
+  margin: 4px 0;
 }
-.legend-labels { display: flex; justify-content: space-between; color: var(--muted); font-size: 0.55rem; }
+.legend-labels {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text3);
+  font-size: 0.6rem;
+  font-weight: 700;
+}
 
 /* ─── Foto ─── */
 .foto-thumb {
@@ -351,18 +406,34 @@ select {
 .split-home { position: relative; height: 100%; width: 100%; overflow: hidden; }
 .split-home .map-half { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
 .split-home .list-half {
-  position: absolute; bottom: 0; left: 0; right: 0; z-index: 200;
-  background: var(--bg2); padding: 10px 12px 16px; max-height: 40vh; min-height: 80px;
-  overflow-y: auto; -webkit-overflow-scrolling: touch;
-  border-top-left-radius: 20px; border-top-right-radius: 20px;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
-  transition: max-height 0.3s ease;
+  position: absolute; 
+  bottom: calc(44px + env(safe-area-inset-bottom)); /* Lift above bottom navigation bar */
+  left: 0; 
+  right: 0; 
+  z-index: 910;
+  background: var(--card); 
+  padding: 12px 16px 20px; 
+  max-height: 45vh; 
+  min-height: 90px;
+  overflow-y: auto; 
+  -webkit-overflow-scrolling: touch;
+  border-top-left-radius: 24px; 
+  border-top-right-radius: 24px;
+  box-shadow: 0 -8px 24px rgba(0,0,0,0.15);
+  border-top: 1px solid var(--border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .split-home .list-half::-webkit-scrollbar { width: 0; }
 .recent-card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 12px; padding: 10px 12px; margin-bottom: 8px;
-  display: flex; gap: 10px; align-items: center;
+  background: var(--bg2); 
+  border: 1px solid var(--border);
+  border-radius: 14px; 
+  padding: 12px 14px; 
+  margin-bottom: 8px;
+  display: flex; 
+  gap: 12px; 
+  align-items: center;
   transition: transform 0.15s, box-shadow 0.15s;
 }
 .recent-card:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+

@@ -130,22 +130,22 @@ export default function PublicPage() {
         {tab === 'inicio' && (
           <div className="split-home">
             {/* Search Bar - Floating */}
-            <div style={{ position: 'absolute', top: 10, left: 10, right: 10, zIndex: 1000 }}>
+            <div className="floating-search-bar">
               <div style={{ position: 'relative' }}>
-                <input 
-                  type="text" 
-                  placeholder="Buscar nombre, CI/DNI, teléfono..." 
+                <input
+                  type="text"
+                  placeholder="Buscar por nombre, CI/DNI o número..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   style={{ 
-                    width: '100%', padding: '10px 40px 10px 14px', borderRadius: 24, 
+                    width: '100%', padding: '12px 40px 12px 16px', borderRadius: 24, 
                     border: 'none', background: 'var(--card)', 
-                    color: 'var(--text)', boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
-                    fontSize: '0.9rem'
+                    color: 'var(--text)', boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                    fontSize: '0.95rem'
                   }}
                 />
                 {searchQuery && (
-                  <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: '1.1rem', cursor: 'pointer', color: 'var(--muted)', padding: 4 }}>✕</button>
+                  <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--muted)', padding: 4 }}>✕</button>
                 )}
               </div>
             </div>

@@ -167,23 +167,86 @@ router.post('/', async (req, res) => {
   }
 });
 
+// ─── ETag cache helper ──────────────────────────
+const crypto = require('crypto');
+function etagCache(res, data, maxAge = 30) {
+  const hash = crypto.createHash('md5').update(JSON.stringify(data)).digest('hex');
+  res.setHeader('ETag', '"' + hash + '"');
+  res.setHeader('Cache-Control', 'public, max-age=' + maxAge);
+}
+
 // ═══════════════════════════════════════════════
-// GET /api/reports — listado (SIN fotos — performance)
+// GET /api/reports — listado paginado + ligero
 // ═══════════════════════════════════════════════
 router.get('/', async (req, res) => {
   try {
-    const { tipo, encontrado } = req.query;
+    const { tipo, encontrado, page, limit, fields } = req.query;
+
     const filter = {};
     if (tipo && VALID_TIPOS.includes(tipo)) filter.tipo = tipo;
     if (encontrado === 'true') filter.encontrado = true;
     if (encontrado === 'false') filter.encontrado = false;
 
+    const pageNum = Math.max(parseInt(page) || 1, 1);
+    const limitNum = Math.min(parseInt(limit) || 500, 2000);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Proyección ligera por defecto (solo lo necesario para mapa+lista)
+    const light = fields !== 'full';
+    const select = light
+      ? '-foto -fotoContentType -description -contactoReportante -telefonoReportante'
+      : '-foto -fotoContentType';
+
+    const [reports, total] = await Promise.all([
+      Report.find(filter).select(select).sort({ reportedAt: -1 }).skip(skip).limit(limitNum).lean(),
+      Report.countDocuments(filter)
+    ]);
+
+    const result = {
+      data: reports.map(r => formatReport(r, false)),
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum)
+      }
+    };
+
+    etagCache(res, result, light ? 15 : 30);
+    res.json(result);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// GET /api/reports/map — datos optimizados para heatmap
+// ═══════════════════════════════════════════════
+router.get('/map', async (req, res) => {
+  try {
+    const { tipo } = req.query;
+    const filter = {};
+    if (tipo && VALID_TIPOS.includes(tipo)) filter.tipo = tipo;
+
+    // Solo campos necesarios para el mapa: lat, lng, tipo, encontrado, source, severity, survivorsCount
     const reports = await Report.find(filter)
-      .select('-foto -fotoContentType')
-      .sort({ reportedAt: -1 })
+      .select('location tipo encontrado source severity survivorsCount nombre')
       .lean();
 
-    res.json(reports.map(r => formatReport(r, false)));
+    const mapData = reports.map(r => ({
+      lat: Number(r.location.coordinates[1]),
+      lng: Number(r.location.coordinates[0]),
+      tipo: r.tipo,
+      encontrado: Boolean(r.encontrado),
+      source: r.source || 'app',
+      severity: r.severity,
+      survivorsCount: r.survivorsCount,
+      nombre: r.nombre ? r.nombre.slice(0, 30) : ''
+    }));
+
+    etagCache(res, mapData, 30);
+    res.json(mapData);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
