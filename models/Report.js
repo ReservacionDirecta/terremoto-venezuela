@@ -104,6 +104,11 @@ const reportSchema = new mongoose.Schema({
     index: true,
     sparse: true
   },
+  // URL de foto externa (de la API de desaparecidos)
+  fotoExterna: {
+    type: String,
+    maxlength: 1000
+  },
   reportedAt: {
     type: Date,
     default: Date.now

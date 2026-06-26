@@ -74,6 +74,7 @@ function formatReport(r, includeFoto = false) {
     hasFoto: Boolean(r.foto),
     flags: Number(r.flags) || 0,
     source: r.source || 'app',
+    fotoExterna: r.fotoExterna || null,
     reportedAt: r.reportedAt ? r.reportedAt.toISOString() : null
   };
   if (includeFoto) out.foto = r.foto || null;

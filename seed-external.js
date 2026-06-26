@@ -88,6 +88,7 @@ async function seed() {
           ultimaUbicacion: (p.ubicacion || '').trim().slice(0, 500),
           description: (p.descripcion || '').trim().slice(0, 500),
           contactoReportante: (p.contacto || '').trim().slice(0, 200),
+          fotoExterna: (p.foto && p.foto.startsWith('http')) ? p.foto : undefined,
           status: p.estado === 'localizado' ? 'localizado' : 'pendiente',
           encontrado: p.estado === 'localizado',
           fechaEncontrado: p.estado === 'localizado' ? new Date(p.updatedAt) : null,
