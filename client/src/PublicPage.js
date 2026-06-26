@@ -286,7 +286,7 @@ export default function PublicPage() {
                   <strong>Desaparecidos Terremoto Venezuela</strong> — Esta es una herramienta ciudadana y no partidista. Ante una emergencia médica, llama a los organismos de rescate. Verifica siempre la información antes de difundirla.
                 </p>
                 <p style={{ fontStyle: 'italic' }}>
-                  ¿Encontraste un problema en el sitio? Escríbenos a <a href="mailto:developer@theempire.tech" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>developer@theempire.tech</a>
+                  ¿Encontraste un problema en el sitio? Escríbenos a <a href="mailto:soporte@chamba.digital" style={{ color: 'var(--blue)', textDecoration: 'underline' }}>soporte@chamba.digital</a>
                 </p>
               </div>
 
