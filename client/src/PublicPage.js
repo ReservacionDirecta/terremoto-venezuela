@@ -108,9 +108,9 @@ export default function PublicPage() {
           <h1 style={{ margin: 0 }}>Hallados Venezuela</h1>
         </div>
         <div className="flex items-center gap-1">
-          <button className="theme-toggle" onClick={toggle} style={{ width: 32, height: 32, fontSize: '1rem' }}>{dark ? '☀️' : '🌙'}</button>
-          <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent', padding: '4px 8px', minHeight: 32, minWidth: 32}}
-                  onClick={() => setShowLogin(true)}>🔒</button>
+          <button className="theme-toggle" onClick={toggle} style={{ width: 32, height: 32, fontSize: '0.85rem' }}>{dark ? 'LUZ' : 'NOC'}</button>
+          <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent', padding: '4px 8px', minHeight: 32, minWidth: 32, fontSize: '0.7rem'}}
+                  onClick={() => setShowLogin(true)}>Admin</button>
         </div>
       </div>
 
@@ -238,7 +238,7 @@ export default function PublicPage() {
                   cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700,
                   color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6
                 }}>
-                {`▲ Reportes (${reports.length})`}
+              {`Reportes (${reports.length})`}
               </button>
             )}
           </div>
@@ -308,14 +308,13 @@ export default function PublicPage() {
 
       <nav className="bottom-nav">
         {[
-          { id: 'inicio', icon: '🗺️', label: 'Mapa' },
-          { id: 'reportar', icon: '➕', label: 'Reportar' },
-          { id: 'directorio', icon: '📋', label: 'Directorio' },
-          { id: 'guia', icon: '📖', label: 'Guía' },
-          { id: 'emergencia', icon: '🆘', label: '911' },
+          { id: 'inicio', label: 'Mapa' },
+          { id: 'reportar', label: 'Reportar' },
+          { id: 'directorio', label: 'Directorio' },
+          { id: 'guia', label: 'Guía' },
+          { id: 'emergencia', label: '911' },
         ].map(n => (
           <button key={n.id} className={`nav-item ${tab === n.id ? 'active' : ''}`} onClick={() => setTab(n.id)}>
-            <span style={{ fontSize: '1.2rem' }}>{n.icon}</span>
             <span>{n.label}</span>
           </button>
         ))}
@@ -393,52 +392,69 @@ export default function PublicPage() {
 
             <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 20px 0' }} />
 
-            {/* Acciones principales */}
+            {/* Acciones */}
             <div style={{ marginBottom: 24 }}>
-              <h3 style={{ fontSize: '1.1rem', margin: '0 0 4px 0' }}>¿Ya lograste comunicarte?</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text2)', margin: '0 0 12px 0' }}>Márcala como localizada y su familia podrá respirar tranquila.</p>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {(selectedReport.tipo === 'desaparecido' || selectedReport.tipo === 'mascota') && !selectedReport.encontrado && (
-                  <button className="btn btn-block" style={{ background: 'var(--green)', color: '#fff', padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
+              {(selectedReport.tipo === 'desaparecido' || selectedReport.tipo === 'mascota') && !selectedReport.encontrado && (
+                <>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--text2)', margin: '0 0 10px 0' }}>Si tienes información de esta persona, actualiza su estado.</p>
+                  <button className="btn btn-block" style={{ background: 'var(--green)', color: '#fff', padding: '14px', borderRadius: 12, fontSize: '1rem' }}
                           onClick={() => handleUpdateStatus('localizado', true)}>
                     Marcar como localizada
                   </button>
-                )}
-                {selectedReport.tipo === 'sobreviviente' && (
-                  <>
-                    <button className="btn btn-block" style={{ background: 'var(--yellow)', color: '#000', padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
-                            onClick={() => handleUpdateStatus('en_proceso', false)}>
-                      Marcar En Proceso de Rescate
-                    </button>
-                    <button className="btn btn-block" style={{ background: 'var(--green)', color: '#fff', padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
-                            onClick={() => handleUpdateStatus('rescatado', true)}>
-                      Marcar Rescatados
-                    </button>
-                  </>
-                )}
-                <button className="btn btn-block btn-secondary" style={{ padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
-                        onClick={() => handleUpdateStatus('falsa_alarma', false)}>
-                  Reporte Falso / Error
-                </button>
-              </div>
+                </>
+              )}
+              {selectedReport.tipo === 'sobreviviente' && (
+                <>
+                  <button className="btn btn-block" style={{ background: 'var(--yellow)', color: '#000', padding: '14px', borderRadius: 12, fontSize: '1rem', marginBottom: 8 }}
+                          onClick={() => handleUpdateStatus('en_proceso', false)}>
+                    En proceso de rescate
+                  </button>
+                  <button className="btn btn-block" style={{ background: 'var(--green)', color: '#fff', padding: '14px', borderRadius: 12, fontSize: '1rem' }}
+                          onClick={() => handleUpdateStatus('rescatado', true)}>
+                    Rescatados
+                  </button>
+                </>
+              )}
             </div>
 
-            {/* Redes Sociales y Compartir */}
-            <div style={{ background: 'var(--bg)', padding: 16, borderRadius: 16 }}>
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '1rem', textAlign: 'center' }}>Ayuda a difundir</h4>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
-                <button className="btn btn-sm btn-outline" style={{ borderRadius: 20, padding: '8px 16px', background: '#000', color: '#fff', border: 'none' }} onClick={() => window.open(`https://twitter.com/intent/tweet?text=Ayúdame a difundir este reporte: ${window.location.href}`)}>X</button>
-                <button className="btn btn-sm btn-outline" style={{ borderRadius: 20, padding: '8px 16px', background: '#1877F2', color: '#fff', border: 'none' }} onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`)}>Facebook</button>
-                <button className="btn btn-sm btn-outline" style={{ borderRadius: 20, padding: '8px 16px', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', color: '#fff', border: 'none' }} onClick={() => window.alert('Usa el botón Compartir de tu teléfono para Instagram.')}>Instagram</button>
-                <button className="btn btn-sm btn-outline" style={{ borderRadius: 20, padding: '8px 16px', background: '#fff', color: '#000' }} onClick={() => { navigator.clipboard.writeText(`Ayúdame a difundir este reporte: ${window.location.href}`); window.alert('Enlace copiado al portapapeles'); }}>Copiar</button>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <button style={{ background: 'none', border: 'none', color: 'var(--red)', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => { window.alert('Reporte enviado para revisión.'); setSelectedReport(null); }}>
-                  Reportar contenido obsceno
-                </button>
-              </div>
-            </div>
+            {/* Compartir */}
+            {(() => {
+              const SITE = 'https://hallados.org';
+              const nombre = selectedReport.nombre || 'una persona';
+              const ubicacion = selectedReport.ultimaUbicacion || '';
+              const shareText = selectedReport.tipo === 'sobreviviente'
+                ? `Personas atrapadas reportadas en ${ubicacion}. Necesitan ayuda urgente. Más info en ${SITE}`
+                : `Buscamos a ${nombre}${ubicacion ? ', vista por última vez en ' + ubicacion : ''}. Cualquier información ayuda. ${SITE}`;
+              const shareUrl = SITE;
+
+              return (
+                <div style={{ background: 'var(--bg)', padding: 14, borderRadius: 12 }}>
+                  <p style={{ margin: '0 0 10px 0', fontSize: '0.85rem', fontWeight: 600, textAlign: 'center', color: 'var(--text2)' }}>Compartir este reporte</p>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                    <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: '#25D366', color: '#fff', border: 'none', fontWeight: 600 }}
+                      onClick={() => window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`)}>WhatsApp</button>
+                    <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: '#1877F2', color: '#fff', border: 'none', fontWeight: 600 }}
+                      onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`)}>Facebook</button>
+                    <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: '#14171a', color: '#fff', border: 'none', fontWeight: 600 }}
+                      onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`)}>X</button>
+                    {navigator.share && (
+                      <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', fontWeight: 600 }}
+                        onClick={() => navigator.share({ title: `Hallados - ${nombre}`, text: shareText, url: shareUrl }).catch(() => {})}>Compartir</button>
+                    )}
+                    <button className="btn btn-sm" style={{ borderRadius: 10, padding: '8px 14px', background: 'var(--card)', color: 'var(--text)', border: '1px solid var(--border)', fontWeight: 600 }}
+                      onClick={() => { navigator.clipboard.writeText(shareText); window.alert('Texto copiado'); }}>Copiar</button>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <button style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.72rem', cursor: 'pointer' }} onClick={() => handleUpdateStatus('falsa_alarma', false)}>
+                      Reportar error
+                    </button>
+                    <button style={{ background: 'none', border: 'none', color: 'var(--muted)', fontSize: '0.72rem', cursor: 'pointer' }} onClick={() => { window.alert('Reporte enviado para revisión.'); setSelectedReport(null); }}>
+                      Contenido inapropiado
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
 
           </div>
         </div>

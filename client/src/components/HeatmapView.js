@@ -241,14 +241,14 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
         display:'flex', flexDirection:'column', gap: 8, alignItems: showChipBar ? 'stretch' : 'flex-end'
       }}>
         {!showChipBar ? (
-          <button className="btn btn-outline" onClick={() => setShowChipBar(true)} style={{ background: 'var(--card)', borderRadius: 20, padding: '8px 12px', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', display: 'flex', gap: 6, alignItems: 'center', fontWeight: 'bold' }}>
-            <span>🔽 Filtros del Mapa</span>
+          <button className="btn btn-outline" onClick={() => setShowChipBar(true)} style={{ background: 'var(--card)', borderRadius: 20, padding: '8px 12px', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', display: 'flex', gap: 6, alignItems: 'center', fontWeight: 'bold', fontSize: '0.8rem' }}>
+            <span>Filtros</span>
           </button>
         ) : (
           <>
             <div style={{ display: 'flex', overflowX: 'auto', gap: 8, paddingBottom: 4, scrollbarWidth: 'none', width: '100%' }} className="chips-container">
               <button className="btn btn-sm btn-outline" onClick={() => { setShowChipBar(false); setShowFilters(false); }} style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: 'var(--card)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-                ✖ Ocultar
+                ✕ Cerrar
               </button>
               {filters.map(x => (
                 <button key={x.k}
@@ -263,7 +263,7 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
               <button className="btn btn-sm btn-outline" 
                       onClick={() => setShowFilters(!showFilters)} 
                       style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: showFilters?'#e2e8f0':'var(--card)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
-                ⚙️ Avanzados
+                Filtros +
               </button>
             </div>
             
@@ -297,11 +297,11 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
         )}
       </div>
       <div className="legend">
-        <div className="fw-700 fs-xs">🔴 Intensidad</div>
+        <div className="fw-700 fs-xs">Intensidad</div>
         <div className="legend-bar"/><div className="legend-labels"><span>Baja</span><span>Alta</span><span>Crítica</span></div>
       </div>
       <div style={{position:'absolute',bottom:20,left:10,zIndex:150,background:'rgba(255,255,255,0.95)',padding:'6px 12px',borderRadius:20,border:'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', fontSize:'0.78rem'}}>
-        📍 <b>{reports.length}</b> · 🎯 <b>{criticalZones.length}</b>
+        <b>{reports.length}</b> reportes · <b>{criticalZones.length}</b> zonas
       </div>
     </div>
   );
