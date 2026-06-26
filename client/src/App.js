@@ -7,7 +7,16 @@ import AdminPage from './AdminPage';
 import './App.css';
 
 function AppInner() {
-  const [auth, setAuth] = useState(null);
+  const [auth, setAuth] = useState(null);       // null=loading, false=no, true=sí
+  const [showAdmin, setShowAdmin] = useState(false); // si el usuario pidió #admin
+
+  // Detectar hash para ruta admin
+  useEffect(() => {
+    const check = () => setShowAdmin(window.location.hash === '#admin');
+    check();
+    window.addEventListener('hashchange', check);
+    return () => window.removeEventListener('hashchange', check);
+  }, []);
 
   useEffect(() => {
     if (isLoggedIn()) {
@@ -21,14 +30,16 @@ function AppInner() {
   const handleLogout = useCallback(() => { logout(); setAuth(false); }, []);
 
   if (auth === null) {
-    return <div className="page text-center mt-4"><div className="spinner" style={{margin:'40px auto'}}/></div>;
+    return <div className="empty-state"><div className="spinner" style={{margin:'40px auto'}}/><p className="mt-2">Cargando...</p></div>;
   }
 
-  return auth ? (
-    <AdminPage onLogout={handleLogout} />
-  ) : (
-    <PublicPage onLoginClick={handleLogin} />
-  );
+  // Admin route
+  if (showAdmin) {
+    return auth ? <AdminPage onLogout={handleLogout} /> : <LoginPage onLogin={handleLogin} />;
+  }
+
+  // Público
+  return <PublicPage />;
 }
 
 export default function App() {

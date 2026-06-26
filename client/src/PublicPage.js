@@ -8,15 +8,13 @@ import Sobrevivientes from './components/Sobrevivientes';
 import Mascotas from './components/Mascotas';
 import LeyendaEmergencia from './components/LeyendaEmergencia';
 import GuiaUso from './components/GuiaUso';
-import LoginPage from './LoginPage';
-import { createReport, fetchReports, fetchCriticalZones, updateReport, searchReports, fetchFoto } from './api';
+import { createReport, fetchReports, fetchCriticalZones } from './api';
 
 export default function PublicPage() {
   const { dark, toggle } = useTheme();
   const [tab, setTab] = useState('inicio');
   const [dirTab, setDirTab] = useState('des');
   const [showForm, setShowForm] = useState(null);
-  const [showLogin, setShowLogin] = useState(false);
   const [success, setSuccess] = useState('');
   const [reports, setReports] = useState([]);
   const [zones, setZones] = useState([]);
@@ -177,19 +175,19 @@ export default function PublicPage() {
     </div>
   );
 
-  if (showLogin) return <LoginPage onLogin={() => window.location.reload()} onBack={() => setShowLogin(false)} />;
-
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="topbar">
         <div className="flex items-center gap-2" style={{ flex: 1, minWidth: 0 }}>
           <Logo size={20} />
-          <h1 style={{ margin: 0 }}>Hallados Venezuela</h1>
+          <h1 style={{ margin: 0 }}>Hallados</h1>
+          <span className="text-sm hide-mobile" style={{opacity:0.75,fontWeight:400}}>Venezuela</span>
         </div>
         <div className="flex items-center gap-1">
-          <button className="theme-toggle" onClick={toggle} style={{ width: 32, height: 32, fontSize: '0.85rem' }}>{dark ? 'LUZ' : 'NOC'}</button>
-          <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent', padding: '4px 8px', minHeight: 32, minWidth: 32, fontSize: '0.7rem'}}
-                  onClick={() => setShowLogin(true)}>Admin</button>
+          <a href="#admin" className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.25)',color:'rgba(255,255,255,0.8)',background:'transparent',padding:'4px 10px',minHeight:32,fontSize:'0.75rem',textDecoration:'none'}}>
+            Colaborar
+          </a>
+          <button className="theme-toggle" onClick={toggle} style={{width:32,height:32,fontSize:'0.85rem'}}>{dark ? '☀️' : '🌙'}</button>
         </div>
       </div>
 
