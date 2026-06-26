@@ -2,7 +2,8 @@ import React, { useState, useRef, useCallback } from 'react';
 
 export default function ReportForm({ tipo, onSubmit, onCancel }) {
   const isDes = tipo === 'desaparecido';
-  const [f, setF] = useState({ lat:'', lng:'', nombre:'', edad:'', ultimaUbicacion:'', description:'', survivorsCount:'', severity:'alta', contactoReportante:'', telefonoReportante:'' });
+  const isMas = tipo === 'mascota';
+  const [f, setF] = useState({ lat:'', lng:'', nombre:'', edad:'', ultimaUbicacion:'', description:'', survivorsCount:'', severity:'alta', contactoReportante:'', telefonoReportante:'', encontrado: false });
   const [submitting, setSubmitting] = useState(false);
   const [gps, setGps] = useState({ active: false, loading: false, error: '' });
   const [foto, setFoto] = useState(null);
@@ -59,7 +60,8 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
     e.preventDefault();
     if (!f.lat || !f.lng) { alert('Ubicación requerida'); return; }
     if (isDes && !f.nombre) { alert('Nombre requerido'); return; }
-    if (!isDes && (!f.description || !f.survivorsCount)) { alert('Completa todos los campos'); return; }
+    if (isMas && !f.description && !f.nombre) { alert('Nombre o descripción requerida'); return; }
+    if (!isDes && !isMas && (!f.description || !f.survivorsCount)) { alert('Completa todos los campos'); return; }
     setSubmitting(true);
     try {
       await onSubmit({
@@ -67,15 +69,16 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
         nombre: f.nombre, edad: f.edad ? parseInt(f.edad) : undefined,
         ultimaUbicacion: f.ultimaUbicacion, description: f.description,
         survivorsCount: f.survivorsCount ? parseInt(f.survivorsCount) : undefined,
-        severity: isDes ? undefined : f.severity,
+        severity: isDes || isMas ? undefined : f.severity,
         contactoReportante: f.contactoReportante, telefonoReportante: f.telefonoReportante,
+        encontrado: isMas ? f.encontrado : undefined,
         foto: foto || undefined, fotoContentType: fotoType || undefined
       });
     } finally { setSubmitting(false); }
   };
 
-  const titulo = isDes ? '🔍 Reportar Desaparecido' : '🆘 Reportar Sobrevivientes';
-  const emoji = isDes ? '🔍' : '🆘';
+  const titulo = isDes ? '🔍 Reportar Desaparecido' : isMas ? '🐾 Reportar Mascota' : '🆘 Reportar Sobrevivientes';
+  const emoji = isDes ? '🔍' : isMas ? '🐾' : '🆘';
 
   return (
     <form onSubmit={submit} style={{display:'flex',flexDirection:'column',gap:14}}>
@@ -114,10 +117,10 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
         </div>
       </div>
 
-      {/* ─── Foto (solo desaparecidos) ─── */}
-      {isDes && (
+      {/* ─── Foto (solo desaparecidos y mascotas) ─── */}
+      {(isDes || isMas) && (
         <div>
-          <div className="fw-700 mb-2">📸 Foto</div>
+          <div className="fw-700 mb-2">📸 Foto {isMas && '(Recomendada)'}</div>
           {fotoPreview ? (
             <div style={{position:'relative',display:'inline-block'}}>
               <img src={fotoPreview} alt="" style={{width:120,height:120,borderRadius:10,objectFit:'cover',border:'2px solid #eee'}} />
@@ -148,6 +151,15 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
             <input type="number" min="0" max="120" placeholder="Edad" value={f.edad} onChange={e => set('edad', e.target.value)} />
             <input placeholder="Última ubicación" value={f.ultimaUbicacion} onChange={e => set('ultimaUbicacion', e.target.value)} />
           </div>
+        </>
+      ) : isMas ? (
+        <>
+          <select value={f.encontrado ? 'true' : 'false'} onChange={e => set('encontrado', e.target.value === 'true')}>
+            <option value="false">🐾 Atrapada / Perdida</option>
+            <option value="true">🟢 Encontrada / Rescatada</option>
+          </select>
+          <input placeholder="Nombre (si lo sabes)" value={f.nombre} onChange={e => set('nombre', e.target.value)} />
+          <textarea rows={2} placeholder="Descripción (raza, color, etc) *" value={f.description} onChange={e => set('description', e.target.value)} required style={{resize:'vertical'}} />
         </>
       ) : (
         <>

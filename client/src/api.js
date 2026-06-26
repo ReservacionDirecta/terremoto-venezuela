@@ -74,3 +74,14 @@ export async function uploadFoto(id, base64, contentType) {
 export async function flagReport(id) {
   return request('/api/reports/' + id + '/flag', { method: 'PATCH' });
 }
+
+// ─── Sincronización externa ────────────────────
+export async function syncExternal(maxPages = 10) {
+  return request('/api/external/sync', { method: 'POST', body: { maxPages }, auth: true });
+}
+export async function fetchExternalStats() {
+  return request('/api/external/stats', { auth: true });
+}
+export async function fetchExternalCounts() {
+  return request('/api/external/counts');
+}

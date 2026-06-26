@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { syncExternal, fetchExternalCounts } from '../api';
 
 export default function StatsPanel({ stats, zones }) {
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
+  const [extCounts, setExtCounts] = useState(null);
   if (!stats) return <div className="empty-state"><div className="spinner" style={{margin:'40px auto'}}/></div>;
   const pct = stats.desaparecidos > 0 ? Math.round((stats.encontrados / stats.desaparecidos) * 100) : 0;
   const totalSurv = stats.severidad?.reduce((s, x) => s + x.totalSurvivors, 0) || 0;
@@ -15,8 +19,8 @@ export default function StatsPanel({ stats, zones }) {
         <KPI v={stats.sobrevivientes} l="🆘 Atrapados" c="#dc2626" sub={`${totalSurv} pers.`} />
         <KPI v={stats.desaparecidos} l="🔍 Desap." c="#2563eb" />
         <KPI v={stats.encontrados} l="Localizados" c="#16a34a" sub={`${pct}%`} />
-        <KPI v={stats.noEncontrados} l="Sin localizar" c="#eab308" />
-        <KPI v={zones.length} l="Zonas críticas" c="#dc2626" />
+        <KPI v={stats.mascotasTotal || 0} l="🐾 Mascotas" c="#f97316" />
+        <KPI v={stats.mascotasEncontradas || 0} l="🐾 Rescatadas" c="#16a34a" />
       </div>
 
       {/* Severidad */}
@@ -65,6 +69,59 @@ export default function StatsPanel({ stats, zones }) {
             Ref: <a href="https://desaparecidosterremotovenezuela.com/" target="_blank" rel="noreferrer">desaparecidosterremotovenezuela.com</a>
           </p>
         </div>
+      </div>
+
+      {/* Sincronización externa */}
+      <div className="card card-blue mt-4">
+        <h3 className="fw-700 fs-sm mb-2">🔄 Datos de desaparecidosterremotovenezuela.com</h3>
+        <p className="fs-xs text-gray mb-3">
+          Importa datos reales de la API pública (56,852+ personas reportadas).
+          Se filtran spam y duplicados automáticamente.
+        </p>
+
+        {extCounts && (
+          <div className="grid-3 mb-3">
+            <div className="kpi"><div className="kpi-value">{extCounts.total}</div><div className="kpi-label">Total API</div></div>
+            <div className="kpi"><div className="kpi-value" style={{color:'#2563eb'}}>{extCounts.sinContacto}</div><div className="kpi-label">Sin contacto</div></div>
+            <div className="kpi"><div className="kpi-value" style={{color:'#16a34a'}}>{extCounts.localizado}</div><div className="kpi-label">Localizados</div></div>
+          </div>
+        )}
+
+        <div className="flex gap-2 flex-wrap">
+          <button className="btn btn-sm btn-secondary"
+                  onClick={async () => { try { setExtCounts(await fetchExternalCounts()); } catch {} }}>
+            📊 Ver totales
+          </button>
+          <button className="btn btn-sm btn-primary"
+                  disabled={syncing}
+                  onClick={async () => {
+                    setSyncing(true); setSyncResult(null);
+                    try { setSyncResult(await syncExternal(5)); }
+                    catch (err) { setSyncResult({ error: err.message }); }
+                    finally { setSyncing(false); }
+                  }}>
+            {syncing ? '⏳ Sincronizando...' : '🔄 Sincronizar (5 págs)'}
+          </button>
+          <button className="btn btn-sm btn-primary"
+                  disabled={syncing}
+                  onClick={async () => {
+                    setSyncing(true); setSyncResult(null);
+                    try { setSyncResult(await syncExternal(20)); }
+                    catch (err) { setSyncResult({ error: err.message }); }
+                    finally { setSyncing(false); }
+                  }}>
+            {syncing ? '⏳' : '🔄 20 págs'}
+          </button>
+        </div>
+
+        {syncResult && !syncResult.error && (
+          <div className="fs-xs mt-2" style={{color:'#16a34a'}}>
+            ✅ Importados: {syncResult.imported} · Saltados: {syncResult.skipped} · Spam: {syncResult.spam} · Sin geo: {syncResult.noGeo}
+          </div>
+        )}
+        {syncResult && syncResult.error && (
+          <div className="fs-xs mt-2 text-red">❌ {syncResult.error}</div>
+        )}
       </div>
     </div>
   );

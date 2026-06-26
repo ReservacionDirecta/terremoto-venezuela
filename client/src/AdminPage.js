@@ -4,6 +4,7 @@ import HeatmapView from './components/HeatmapView';
 import ReportForm from './components/ReportForm';
 import CriticalZones from './components/CriticalZones';
 import Desaparecidos from './components/Desaparecidos';
+import Mascotas from './components/Mascotas';
 import Sobrevivientes from './components/Sobrevivientes';
 import StatsPanel from './components/StatsPanel';
 
@@ -53,6 +54,7 @@ export default function AdminPage({ onLogout }) {
   const tabs = [
     { key: 'mapa',            label: '🔥 Mapa',             color: '#dc2626' },
     { key: 'desaparecidos',   label: '🔍 Desaparecidos',    color: '#2563eb' },
+    { key: 'mascotas',        label: '🐾 Mascotas',         color: '#f97316' },
     { key: 'sobrevivientes',  label: '🆘 Sobrevivientes',   color: '#dc2626' },
     { key: 'zonas',           label: '🎯 Zonas Críticas',   color: '#eab308' },
     { key: 'stats',           label: '📊 Estadísticas',     color: '#111' },
@@ -89,6 +91,7 @@ export default function AdminPage({ onLogout }) {
           {[
             {k:'all',l:'👥 Todos'},
             {k:'desaparecido',l:'🔍 Desaparecidos'},
+            {k:'mascota',l:'🐾 Mascotas'},
             {k:'sobreviviente',l:'🆘 Atrapados'},
           ].map(f => (
             <button key={f.k}
@@ -137,6 +140,10 @@ export default function AdminPage({ onLogout }) {
               <Desaparecidos reports={reports.filter(r => r.tipo === 'desaparecido')}
                              onUpdate={loadData} />
             )}
+            {panel === 'mascotas' && (
+              <Mascotas reports={reports.filter(r => r.tipo === 'mascota')}
+                        onUpdate={loadData} />
+            )}
             {panel === 'sobrevivientes' && (
               <Sobrevivientes reports={reports.filter(r => r.tipo === 'sobreviviente')}
                               onUpdate={loadData} />
@@ -151,6 +158,8 @@ export default function AdminPage({ onLogout }) {
       <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, display: 'flex', flexDirection: 'column', gap: 10 }}>
         <button className="fab" style={{background:'#2563eb',width:48,height:48,fontSize:18}}
                 onClick={() => setShowForm('desaparecido')}>🔍</button>
+        <button className="fab" style={{background:'#f97316',width:48,height:48,fontSize:18}}
+                onClick={() => setShowForm('mascota')}>🐾</button>
         <button className="fab" onClick={() => setShowForm('sobreviviente')}>🆘</button>
       </div>
 

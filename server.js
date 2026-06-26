@@ -6,6 +6,7 @@ const path = require('path');
 
 const reportsRouter = require('./routes/reports');
 const authRouter = require('./routes/auth');
+const externalRouter = require('./routes/external');
 const User = require('./models/User');
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(express.json({ limit: '2mb' }));
 // ─── Rutas ─────────────────────────────────────
 app.use('/api/auth', authRouter);
 app.use('/api/reports', reportsRouter);
+app.use('/api/external', externalRouter);
 
 app.get('/api/health', (_req, res) => {
   res.json({

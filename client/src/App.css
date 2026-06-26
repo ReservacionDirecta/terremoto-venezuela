@@ -318,5 +318,30 @@ select {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ─── Empty / Error ─── */
 .empty-state { padding: 40px 20px; text-align: center; color: var(--muted); }
+
+/* ─── Bottom Navigation ─── */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  padding-bottom: env(safe-area-inset-bottom);
+  z-index: 500;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 10px 4px; font-size: 0.7rem; color: var(--muted); border: none; background: transparent; cursor: pointer;
+  transition: color 0.2s;
+}
+.nav-item.active { color: var(--red); font-weight: 700; }
+.nav-icon { font-size: 1.3rem; margin-bottom: 3px; }
+
+/* ─── Layout Ajustes ─── */
+.pb-nav { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+.split-home { display: flex; flex-direction: column; height: 100%; }
+.split-home .map-half { height: 45vh; flex-shrink: 0; border-bottom: 2px solid var(--border); position: relative; }
+.split-home .list-half { flex: 1; overflow-y: auto; background: var(--bg2); padding: 12px; }
+.recent-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }

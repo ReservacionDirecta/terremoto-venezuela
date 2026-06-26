@@ -4,7 +4,7 @@ const Report = require('../models/Report');
 const { authMiddleware } = require('../middleware/auth');
 
 // ─── Helpers ────────────────────────────────────
-const VALID_TIPOS = ['sobreviviente', 'desaparecido'];
+const VALID_TIPOS = ['sobreviviente', 'desaparecido', 'mascota'];
 const VALID_STATUS = ['pendiente', 'en_proceso', 'atendido', 'localizado'];
 const VALID_SEVERITY = ['alta', 'media', 'baja'];
 
@@ -73,6 +73,7 @@ function formatReport(r, includeFoto = false) {
     fotoContentType: r.fotoContentType || null,
     hasFoto: Boolean(r.foto),
     flags: Number(r.flags) || 0,
+    source: r.source || 'app',
     reportedAt: r.reportedAt ? r.reportedAt.toISOString() : null
   };
   if (includeFoto) out.foto = r.foto || null;
@@ -98,6 +99,9 @@ router.post('/', async (req, res) => {
     }
     if (tipo === 'desaparecido' && !nombre?.trim()) {
       return res.status(400).json({ error: 'nombre requerido para reportar desaparecido' });
+    }
+    if (tipo === 'mascota' && !description?.trim() && !nombre?.trim()) {
+      return res.status(400).json({ error: 'nombre o descripción requerida para reportar mascota' });
     }
     if (tipo === 'sobreviviente') {
       if (!description?.trim() || survivorsCount == null) {
@@ -150,8 +154,8 @@ router.post('/', async (req, res) => {
       telefonoReportante: sanitize(telefonoReportante, 50),
       foto: foto || undefined,
       fotoContentType: fotoContentType || undefined,
-      status: 'pendiente',
-      encontrado: false,
+      status: req.body.encontrado ? 'localizado' : 'pendiente',
+      encontrado: Boolean(req.body.encontrado),
       flags: 0
     };
 
@@ -211,12 +215,14 @@ router.get('/:id/foto', async (req, res) => {
 // ═══════════════════════════════════════════════
 router.get('/stats', async (req, res) => {
   try {
-    const [total, sobrevivientes, desaparecidos, encontrados, noEncontrados] = await Promise.all([
+    const [total, sobrevivientes, desaparecidos, encontrados, noEncontrados, mascotasTotal, mascotasEncontradas] = await Promise.all([
       Report.countDocuments(),
       Report.countDocuments({ tipo: 'sobreviviente' }),
       Report.countDocuments({ tipo: 'desaparecido' }),
       Report.countDocuments({ tipo: 'desaparecido', encontrado: true }),
-      Report.countDocuments({ tipo: 'desaparecido', encontrado: false })
+      Report.countDocuments({ tipo: 'desaparecido', encontrado: false }),
+      Report.countDocuments({ tipo: 'mascota' }),
+      Report.countDocuments({ tipo: 'mascota', encontrado: true })
     ]);
 
     const sevCounts = await Report.aggregate([
@@ -237,6 +243,8 @@ router.get('/stats', async (req, res) => {
       desaparecidos: Number(desaparecidos),
       encontrados: Number(encontrados),
       noEncontrados: Number(noEncontrados),
+      mascotasTotal: Number(mascotasTotal),
+      mascotasEncontradas: Number(mascotasEncontradas),
       severidad: sevCounts.map(s => ({
         _id: s._id,
         count: Number(s.count),

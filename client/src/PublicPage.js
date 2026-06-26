@@ -1,23 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTheme } from './ThemeContext';
 import Logo from './components/Logo';
 import ReportForm from './components/ReportForm';
 import HeatmapView from './components/HeatmapView';
 import Desaparecidos from './components/Desaparecidos';
+import Mascotas from './components/Mascotas';
 import Sobrevivientes from './components/Sobrevivientes';
-import LoginPage from './LoginPage';
 import { createReport, fetchReports, fetchCriticalZones } from './api';
-
-const TABS = [
-  { key: 'reportar',       label: '📝 Reportar' },
-  { key: 'mapa',           label: '🔥 Mapa' },
-  { key: 'desaparecidos',  label: '🔍 Desaparecidos' },
-  { key: 'sobrevivientes', label: '🆘 Atrapados' },
-];
 
 export default function PublicPage() {
   const { dark, toggle } = useTheme();
-  const [tab, setTab] = useState('reportar');
+  const [tab, setTab] = useState('inicio');
+  const [dirTab, setDirTab] = useState('des');
   const [showForm, setShowForm] = useState(null);
   const [showLogin, setShowLogin] = useState(false);
   const [success, setSuccess] = useState('');
@@ -25,7 +19,6 @@ export default function PublicPage() {
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState('all');
 
   const loadPublicData = useCallback(async () => {
     setLoading(true);
@@ -44,12 +37,11 @@ export default function PublicPage() {
     }
   }, []);
 
-  // Cargar datos al hacer clic en mapa/listas
   useEffect(() => {
-    if (tab !== 'reportar' && reports.length === 0 && !loading) {
+    if (reports.length === 0 && !loading) {
       loadPublicData();
     }
-  }, [tab]); // eslint-disable-line
+  }, []); // eslint-disable-line
 
   const handleSubmit = async (data) => {
     try {
@@ -57,6 +49,8 @@ export default function PublicPage() {
       setShowForm(null);
       setSuccess(data.tipo === 'desaparecido'
         ? 'Persona desaparecida reportada. Gracias.'
+        : data.tipo === 'mascota'
+        ? 'Mascota reportada. Gracias.'
         : 'Sobrevivientes atrapados reportados.');
       setTimeout(() => setSuccess(''), 5000);
       loadPublicData();
@@ -65,131 +59,147 @@ export default function PublicPage() {
     }
   };
 
-  const filteredReports = filter === 'all' ? reports : reports.filter(r => r.tipo === filter);
-  const desp = reports.filter(r => r.tipo === 'desaparecido');
-  const sobr = reports.filter(r => r.tipo === 'sobreviviente');
+  const recentReports = useMemo(() => {
+    return [...reports].sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt)).slice(0, 15);
+  }, [reports]);
 
   if (showLogin) return <LoginPage onLogin={() => window.location.reload()} onBack={() => setShowLogin(false)} />;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Topbar */}
-      <div className="topbar">
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <div className="topbar" style={{ padding: '8px 12px' }}>
         <div className="flex items-center gap-2">
-          <Logo size={30} />
-          <h1>🇻🇪 Terremoto Venezuela</h1>
-          <div className="fs-xs" style={{opacity:0.85}}>
-            {reports.length > 0 ? `${reports.length} reportes · ${desp.length}🔍 · ${sobr.length}🆘` : 'Registro de desaparecidos y sobrevivientes'}
-          </div>
+          <Logo size={24} />
+          <h1 style={{ fontSize: '1.1rem' }}>🇻🇪 Terremoto</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button className="theme-toggle" onClick={toggle}>{dark ? '☀️' : '🌙'}</button>
-          <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent'}}
-                  onClick={() => setShowLogin(true)}>🔒 Admin</button>
+          <button className="theme-toggle" onClick={toggle} style={{ padding: 4 }}>{dark ? '☀️' : '🌙'}</button>
+          <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent', padding: '4px 8px'}}
+                  onClick={() => setShowLogin(true)}>🔒</button>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="panel-toolbar" style={{display:'flex',gap:4,overflowX:'auto',alignItems:'center'}}>
-        {TABS.map(t => (
-          <button key={t.key} className={`btn btn-sm ${tab === t.key ? 'btn-outline active' : 'btn-outline'}`}
-                  onClick={() => setTab(t.key)}>{t.label}</button>
-        ))}
-        <span style={{marginLeft:'auto'}} className="fs-xs">
-          {tab === 'reportar' ? (
-            <span className="flex items-center gap-1">
-              <button className="btn btn-sm btn-secondary" onClick={() => setShowForm('desaparecido')}>🔍 Reportar</button>
-              <button className="btn btn-sm btn-primary" onClick={() => setShowForm('sobreviviente')}>🆘 Reportar</button>
-            </span>
-          ) : (
-            <span className="text-gray">{filteredReports.length} resultados</span>
-          )}
-        </span>
-      </div>
-
-      {/* Success / Error */}
       {success && (
-        <div className="fs-sm fw-700" style={{padding:'10px 14px',textAlign:'center',background:'#f0fdf4',color:'#16a34a',borderBottom:'2px solid #bbf7d0'}}>
+        <div className="fs-sm fw-700" style={{padding:'8px',textAlign:'center',background:'#f0fdf4',color:'#16a34a'}}>
           ✅ {success}
         </div>
       )}
       {error && (
-        <div className="fs-sm" style={{padding:'10px 14px',textAlign:'center',background:'#fef2f2',color:'#dc2626',borderBottom:'2px solid #fecaca'}}>
-          ⚠️ {error}
-          <button className="btn btn-sm" style={{marginLeft:10,background:'#dc2626',color:'#fff',border:'none'}}
-                  onClick={loadPublicData}>Reintentar</button>
+        <div className="fs-sm" style={{padding:'8px',textAlign:'center',background:'#fef2f2',color:'#dc2626'}}>
+          ⚠️ {error} <button className="btn btn-sm text-red ml-2" onClick={loadPublicData}>🔄</button>
         </div>
       )}
 
-      {/* Contenido */}
-      <div style={{flex:1,overflow:'hidden'}}>
-        {/* --- Reportar --- */}
-        {tab === 'reportar' && (
-          <div className="hero-public">
-            <h2 style={{fontSize:'1.3rem',fontWeight:700,color:'#dc2626',marginBottom:8}}>Reconectemos a cada familia.</h2>
-            <p style={{color:'#666',fontSize:'0.9rem',maxWidth:420,margin:'0 auto',lineHeight:1.5}}>
-              Si no logras contactar a alguien tras el terremoto, repórtalo. Es gratis y menos de un minuto.
-            </p>
-            <div style={{maxWidth:380,margin:'14px auto 0',display:'flex',flexDirection:'column',gap:10}}>
-              <button className="btn btn-secondary btn-block" onClick={() => setShowForm('desaparecido')}>
-                🔍 Reportar Persona Desaparecida
-              </button>
-              <button className="btn btn-primary btn-block" onClick={() => setShowForm('sobreviviente')}>
-                🆘 Reportar Sobrevivientes Atrapados
-              </button>
+      <div className="pb-nav" style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+        
+        {tab === 'inicio' && (
+          <div className="split-home">
+            <div className="map-half">
+              {loading && reports.length === 0 ? (
+                <div className="empty-state"><div className="spinner" style={{margin:'20px auto'}}/></div>
+              ) : (
+                <HeatmapView reports={reports} criticalZones={zones} filter="all" onFilterChange={() => {}} compact />
+              )}
             </div>
-            <div className="flex gap-2 mt-3 fs-xs" style={{justifyContent:'center',flexWrap:'wrap',color:'#999'}}>
-              <span>🔍 <b>Desaparecido:</b> no logras comunicarte</span>
-              <span>·</span>
-              <span>🆘 <b>Atrapado:</b> necesita rescate urgente</span>
+            <div className="list-half">
+              <h3 className="fs-sm fw-700 text-gray mb-2">Últimos reportes</h3>
+              {recentReports.length === 0 ? (
+                <p className="fs-xs text-muted">No hay reportes recientes.</p>
+              ) : (
+                recentReports.map(r => (
+                  <div key={r._id} className="recent-card" style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? '#2563eb' : r.tipo === 'mascota' ? '#f97316' : '#dc2626'}`}}>
+                    <div style={{ fontSize: '1.5rem' }}>{r.tipo === 'desaparecido' ? '🔍' : r.tipo === 'mascota' ? '🐾' : '🆘'}</div>
+                    <div style={{ flex: 1 }}>
+                      <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
+                      <div className="fs-xs text-gray mt-1">
+                        📍 {r.ultimaUbicacion || 'Ubicación marcada'}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
 
-        {/* --- Mapa --- */}
-        {tab === 'mapa' && (
-          loading ? (
-            <div className="empty-state"><div className="spinner" style={{margin:'40px auto'}}/><p className="text-gray mt-2">Cargando mapa...</p></div>
-          ) : (
-            <HeatmapView reports={filteredReports} criticalZones={zones} filter={filter} onFilterChange={setFilter} />
-          )
+        {tab === 'reportar' && (
+          <div style={{ padding: '20px', overflowY: 'auto', height: '100%' }}>
+            <div className="hero-public" style={{ padding: '20px 10px', borderRadius: 12 }}>
+              <h2 style={{fontSize:'1.3rem',fontWeight:700,color:'#dc2626',marginBottom:10}}>Reconectemos a cada familia.</h2>
+              <p style={{color:'#666',fontSize:'0.9rem',maxWidth:420,margin:'0 auto',lineHeight:1.5}}>
+                Si no logras contactar a alguien, hay mascotas perdidas o personas atrapadas, repórtalo aquí.
+              </p>
+              <div style={{maxWidth:380,margin:'20px auto 0',display:'flex',flexDirection:'column',gap:12}}>
+                <button className="btn btn-secondary btn-block" style={{ padding: '16px' }} onClick={() => setShowForm('desaparecido')}>
+                  <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: 4 }}>🔍</span>
+                  Reportar Desaparecido
+                </button>
+                <button className="btn btn-warning btn-block" style={{ padding: '16px', background: '#f97316', border: 'none' }} onClick={() => setShowForm('mascota')}>
+                  <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: 4 }}>🐾</span>
+                  Reportar Mascota
+                </button>
+                <button className="btn btn-primary btn-block" style={{ padding: '16px' }} onClick={() => setShowForm('sobreviviente')}>
+                  <span style={{ fontSize: '1.2rem', display: 'block', marginBottom: 4 }}>🆘</span>
+                  Reportar Atrapados
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
-        {/* --- Desaparecidos --- */}
-        {tab === 'desaparecidos' && (
-          loading ? (
-            <div className="empty-state"><div className="spinner" style={{margin:'40px auto'}}/><p className="text-gray mt-2">Cargando lista...</p></div>
-          ) : (
-            <Desaparecidos reports={desp} readOnly />
-          )
-        )}
-
-        {/* --- Sobrevivientes --- */}
-        {tab === 'sobrevivientes' && (
-          loading ? (
-            <div className="empty-state"><div className="spinner" style={{margin:'40px auto'}}/><p className="text-gray mt-2">Cargando lista...</p></div>
-          ) : (
-            <Sobrevivientes reports={sobr} readOnly />
-          )
+        {tab === 'directorio' && (
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div className="flex" style={{position:'sticky',top:0,zIndex:10,background:'var(--card)',borderBottom:'2px solid var(--border)'}}>
+              <button className="flex-1 fw-700 fs-sm" 
+                      style={{padding:'12px',background:'transparent',border:'none',cursor:'pointer',borderBottom:dirTab==='des'?'2px solid var(--blue)':'none',color:dirTab==='des'?'var(--blue)':'var(--text3)'}} 
+                      onClick={()=>setDirTab('des')}>🔍 Desaparecidos</button>
+              <button className="flex-1 fw-700 fs-sm" 
+                      style={{padding:'12px',background:'transparent',border:'none',cursor:'pointer',borderBottom:dirTab==='mas'?'2px solid #f97316':'none',color:dirTab==='mas'?'#f97316':'var(--text3)'}} 
+                      onClick={()=>setDirTab('mas')}>🐾 Mascotas</button>
+              <button className="flex-1 fw-700 fs-sm" 
+                      style={{padding:'12px',background:'transparent',border:'none',cursor:'pointer',borderBottom:dirTab==='sob'?'2px solid var(--red)':'none',color:dirTab==='sob'?'var(--red)':'var(--text3)'}} 
+                      onClick={()=>setDirTab('sob')}>🆘 Sobrevivientes</button>
+            </div>
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              {loading && reports.length === 0 ? (
+                <div className="empty-state"><div className="spinner" style={{margin:'40px auto'}}/></div>
+              ) : dirTab === 'des' ? (
+                <Desaparecidos reports={reports.filter(r => r.tipo === 'desaparecido')} onUpdate={loadPublicData} readOnly />
+              ) : dirTab === 'mas' ? (
+                <Mascotas reports={reports.filter(r => r.tipo === 'mascota')} onUpdate={loadPublicData} readOnly />
+              ) : (
+                <Sobrevivientes reports={reports.filter(r => r.tipo === 'sobreviviente')} readOnly />
+              )}
+            </div>
+          </div>
         )}
       </div>
 
+      {/* Bottom Navigation */}
+      <nav className="bottom-nav">
+        <button className={`nav-item ${tab === 'inicio' ? 'active' : ''}`} onClick={() => setTab('inicio')}>
+          <div className="nav-icon">🗺️</div>
+          Inicio
+        </button>
+        <button className={`nav-item ${tab === 'reportar' ? 'active' : ''}`} onClick={() => setTab('reportar')}>
+          <div className="nav-icon">➕</div>
+          Reportar
+        </button>
+        <button className={`nav-item ${tab === 'directorio' ? 'active' : ''}`} onClick={() => setTab('directorio')}>
+          <div className="nav-icon">📋</div>
+          Directorio
+        </button>
+      </nav>
+
       {/* Modal form */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(null)}>
+        <div className="modal-overlay" onClick={() => setShowForm(null)} style={{ zIndex: 1000 }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <ReportForm tipo={showForm} onSubmit={handleSubmit} onCancel={() => setShowForm(null)} />
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <div style={{padding:'14px 16px',textAlign:'center',borderTop:'2px solid #eee',background:'#f8f8f8'}}>
-        <p className="fs-xs" style={{color:'#999'}}>
-          24 Jun 2026 · 7.2 + 7.5 Mw · Yaracuy/Carabobo ·{' '}
-          <a href="https://desaparecidosterremotovenezuela.com/" target="_blank" rel="noreferrer">desaparecidosterremotovenezuela.com</a>
-        </p>
-      </div>
     </div>
   );
 }
+

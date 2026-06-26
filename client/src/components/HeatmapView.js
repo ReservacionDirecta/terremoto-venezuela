@@ -11,11 +11,13 @@ L.Icon.Default.mergeOptions({
 const EPI = [10.35, -68.62];
 const sevColors = { alta:'#dc2626', media:'#eab308', baja:'#2563eb' };
 
-export default function HeatmapView({ reports, criticalZones, filter, onFilterChange }) {
+export default function HeatmapView({ reports, criticalZones, filter, onFilterChange, compact }) {
   const mapRef = useRef(null);
   const heatRef = useRef(null);
   const markersRef = useRef(null);
   const [showMarkers, setShowMarkers] = useState(true);
+
+  // ... (keep useEffects the same but adjust rendering below)
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -41,7 +43,7 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
     if (heatRef.current) { map.removeLayer(heatRef.current); heatRef.current = null; }
     markersRef.current?.clearLayers();
 
-    const data = reports.map(r => {
+    const data = reports.filter(r => r.tipo !== 'mascota').map(r => {
       let i;
       if (r.tipo === 'sobreviviente') i = (r.severity==='alta'?1:r.severity==='media'?0.6:0.3)*Math.min((r.survivorsCount||1)/5,2);
       else i = r.encontrado ? 0.15 : 0.8;
@@ -59,17 +61,21 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
     if (showMarkers) {
       reports.forEach(r => {
         const isS = r.tipo === 'sobreviviente';
-        const c = isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
-        const em = isS ? '🆘' : r.encontrado ? '✅' : '🔍';
+        const isExt = r.source === 'external';
+        const c = isExt ? '#2563eb' : isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
+        const em = isExt ? '🌐' : isS ? '🆘' : r.encontrado ? '✅' : '🔍';
         const icon = L.divIcon({
           html: `<div style="width:16px;height:16px;background:${c};border:2px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;">${em}</div>`,
           iconSize: [16,16], iconAnchor: [8,8]
         });
+        
+        let title = isS ? '🆘 Sobreviviente '+r.severity : isM ? (r.encontrado ? '🟢 Mascota Encontrada' : '🐾 Mascota Atrapada/Perdida') : (r.encontrado ? '✅ Localizado' : '🔍 Desaparecido');
         L.marker([r.lat, r.lng], { icon }).addTo(markersRef.current).bindPopup(`
           <div style="font-family:system-ui;min-width:200px">
-            <b style="color:${c}">${isS?'🆘 Sobreviviente '+r.severity:r.encontrado?'✅ Localizado':'🔍 Desaparecido'}</b>
-            ${!isS?`<p style="margin:4px 0"><b>${r.nombre||'Sin nombre'}</b>${r.edad?' ('+r.edad+')':''}</p>`:''}
-            ${isS?`<p>${r.description}</p><p>👥 <b>${r.survivorsCount}</b></p>`:''}
+            <b style="color:${c}">${title}</b>
+            ${(!isS && r.nombre) ? `<p style="margin:4px 0"><b>${r.nombre}</b>${r.edad?' ('+r.edad+')':''}</p>` : ''}
+            ${(isS || isM) ? `<p>${r.description || ''}</p>` : ''}
+            ${isS ? `<p>👥 <b>${r.survivorsCount}</b></p>` : ''}
             <p style="color:#666;font-size:0.7rem">📍 ${r.ultimaUbicacion||r.lat.toFixed(4)+', '+r.lng.toFixed(4)}</p>
           </div>`);
       });
@@ -88,38 +94,38 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
   }, [criticalZones]);
 
   const filters = [
-    {k:'all',l:'👥 Todos los reportes'},
-    {k:'desaparecido',l:'🔍 Solo Desaparecidos'},
-    {k:'sobreviviente',l:'🆘 Solo Atrapados'}
+    {k:'all',l:'👥 Todos'},
+    {k:'desaparecido',l:'🔍 Desaparecidos'},
+    {k:'sobreviviente',l:'🆘 Atrapados'}
   ];
 
-  const counts = {
-    all: reports.length,
-    desaparecido: reports.filter(r => r.tipo === 'desaparecido').length,
-    sobreviviente: reports.filter(r => r.tipo === 'sobreviviente').length
-  };
+  const extCount = reports.filter(r => r.source === 'external').length;
+  const localCount = reports.filter(r => r.source !== 'external').length;
 
   return (
     <div className="map-wrap">
-      <div id="map-container" style={{height:'100%',width:'100%'}}/>
+      <div id="map-container" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}/>
       {/* Filtro visible tipo topbar */}
-      <div style={{
-        position:'absolute',top:0,left:0,right:0,zIndex:160,
-        background:'rgba(255,255,255,0.96)',padding:'8px 12px',
-        borderBottom:'2px solid #eee',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'
-      }}>
-        <span className="fs-xs fw-700 text-gray" style={{whiteSpace:'nowrap'}}>Mostrar en mapa:</span>
-        {filters.map(x => (
-          <button key={x.k}
-                  className={`btn btn-sm ${filter===x.k?'btn-outline active':'btn-outline'}`}
-                  onClick={()=>onFilterChange(x.k)}>
-            {x.l} <span style={{opacity:0.6}}>({counts[x.k]})</span>
-          </button>
-        ))}
-        <label className="flex items-center gap-1 fs-xs" style={{cursor:'pointer',marginLeft:'auto'}}>
-          <input type="checkbox" checked={showMarkers} onChange={e=>setShowMarkers(e.target.checked)}/> Puntos
-        </label>
-      </div>
+      {!compact && (
+        <div style={{
+          position:'absolute',top:0,left:0,right:0,zIndex:160,
+          background:'rgba(255,255,255,0.96)',padding:'8px 12px',
+          borderBottom:'2px solid #eee',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'
+        }}>
+          <span className="fs-xs fw-700 text-gray" style={{whiteSpace:'nowrap'}}>Mostrar en mapa:</span>
+          {filters.map(x => (
+            <button key={x.k}
+                    className={`btn btn-sm ${filter===x.k?'btn-outline active':'btn-outline'}`}
+                    onClick={()=>onFilterChange(x.k)}>
+              {x.l} <span style={{opacity:0.6}}>({x.k === 'all' ? reports.length : reports.filter(r => r.tipo === x.k).length})</span>
+            </button>
+          ))}
+          {extCount > 0 && <span className="fs-xs" style={{color:'#2563eb'}}>🌐 {extCount} externos</span>}
+          <label className="flex items-center gap-1 fs-xs" style={{cursor:'pointer',marginLeft:'auto'}}>
+            <input type="checkbox" checked={showMarkers} onChange={e=>setShowMarkers(e.target.checked)}/> Puntos
+          </label>
+        </div>
+      )}
       <div className="legend">
         <div className="fw-700 fs-xs">🔴 Intensidad</div>
         <div className="legend-bar"/><div className="legend-labels"><span>Baja</span><span>Alta</span><span>Crítica</span></div>

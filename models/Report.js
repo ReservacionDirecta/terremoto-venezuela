@@ -4,7 +4,7 @@ const reportSchema = new mongoose.Schema({
   // Tipo de reporte
   tipo: {
     type: String,
-    enum: ['sobreviviente', 'desaparecido'],
+    enum: ['sobreviviente', 'desaparecido', 'mascota'],
     required: true
   },
   // Campos para desaparecidos
@@ -91,6 +91,18 @@ const reportSchema = new mongoose.Schema({
     type: String,
     enum: ['app', 'web', 'telegram', 'whatsapp'],
     default: 'web'
+  },
+  // Origen del dato: 'app' (nuestro) o 'external' (API desaparecidos)
+  source: {
+    type: String,
+    enum: ['app', 'external'],
+    default: 'app'
+  },
+  // ID del registro en la API externa (para evitar duplicados)
+  externalId: {
+    type: String,
+    index: true,
+    sparse: true
   },
   reportedAt: {
     type: Date,
