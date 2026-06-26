@@ -10,7 +10,6 @@ const authRouter = require('./routes/auth');
 const externalRouter = require('./routes/external');
 const User = require('./models/User');
 const cron = require('node-cron');
-const { syncExternal } = require('./services/syncCron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -62,8 +61,19 @@ function rateLimit(maxReq = 60) {
 
 // ─── Rutas ─────────────────────────────────────
 app.use('/api/auth', authRouter);
-app.use('/api/reports', rateLimit(120), reportsRouter);      // 120 req/min para GET públicos
+app.use('/api/reports', rateLimit(120), reportsRouter);
 app.use('/api/external', externalRouter);
+
+// ─── Sync trigger (manual) ─────────────────────
+const { syncExternal } = require('./services/syncCron');
+app.post('/api/cron/sync', async (_req, res) => {
+  try {
+    const result = await syncExternal({ maxPages: 8, log: console.log });
+    res.json({ success: true, ...result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Health check con métricas básicas
 app.get('/api/health', (_req, res) => {
@@ -100,28 +110,19 @@ mongoose.connect(MONGO_URI, mongoOpts).then(async () => {
   console.log(`🔑 Admin: ${adminUser} / ${adminPass}`);
 
   // ─── Cron: sincronizar cada 3 horas ──────────
+  const { syncExternal: doSync } = require('./services/syncCron');
   cron.schedule('0 */3 * * *', async () => {
     console.log('⏰ Cron: iniciando sincronización...');
     try {
-      await syncExternal({ maxPages: 8, log: console.log });
+      await doSync({ maxPages: 8, log: console.log });
     } catch (err) {
       console.error('❌ Cron error:', err.message);
     }
   });
   console.log('⏰ Cron: sincronización cada 3 horas');
 
-  // ─── Endpoint manual de sync ──────────────────
-  app.post('/api/cron/sync', async (_req, res) => {
-    try {
-      const result = await syncExternal({ maxPages: 10, log: console.log });
-      res.json({ success: true, ...result });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  });
-
   // ─── Sincronización inicial (arranque) ───────
-  syncExternal({ maxPages: 5, log: console.log })
+  doSync({ maxPages: 5, log: console.log })
     .then(r => console.log(`🔄 Sync inicial: +${r.imported} nuevos`))
     .catch(e => console.error('Sync inicial:', e.message));
 
