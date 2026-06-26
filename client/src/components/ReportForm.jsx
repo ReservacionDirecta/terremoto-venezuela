@@ -31,7 +31,8 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
         if (w > MAX || h > MAX) { const r = Math.min(MAX/w, MAX/h); w = Math.round(w*r); h = Math.round(h*r); }
         const canvas = document.createElement('canvas');
         canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, w, h);
         const b64 = canvas.toDataURL('image/jpeg', 0.5);
         setFoto(b64); setFotoPreview(b64); setFotoType('image/jpeg');
       };

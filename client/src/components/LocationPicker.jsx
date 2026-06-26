@@ -73,7 +73,7 @@ export default function LocationPicker({
       return;
     }
 
-    constLatLng = [latNum, lngNum];
+    const latlng = [latNum, lngNum];
     
     // Create or update marker
     if (!markerRef.current) {
