@@ -101,16 +101,14 @@ export default function PublicPage() {
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <div className="topbar" style={{ padding: '8px 12px' }}>
+      <div className="topbar">
         <div className="flex items-center gap-2" style={{ flex: 1, minWidth: 0 }}>
-          <Logo size={24} />
-          <h1 style={{ fontSize: '1rem', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            Hallados | Mapa de desaparecidos y atrapados | Terremoto Venezuela
-          </h1>
+          <Logo size={20} />
+          <h1 style={{ margin: 0 }}>Hallados Venezuela</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <button className="theme-toggle" onClick={toggle} style={{ padding: 4 }}>{dark ? '☀️' : '🌙'}</button>
-          <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent', padding: '4px 8px'}}
+        <div className="flex items-center gap-1">
+          <button className="theme-toggle" onClick={toggle} style={{ width: 32, height: 32, fontSize: '1rem' }}>{dark ? '☀️' : '🌙'}</button>
+          <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent', padding: '4px 8px', minHeight: 32, minWidth: 32}}
                   onClick={() => setShowLogin(true)}>🔒</button>
         </div>
       </div>
@@ -131,19 +129,24 @@ export default function PublicPage() {
         {tab === 'inicio' && (
           <div className="split-home">
             {/* Search Bar - Floating */}
-            <div style={{ position: 'absolute', top: 12, left: 12, right: 12, zIndex: 1000 }}>
-              <input 
-                type="text" 
-                placeholder="🔍 Buscar por nombre, CI/DNI, teléfono..." 
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                style={{ 
-                  width: '100%', padding: '12px 16px', borderRadius: 24, 
-                  border: '1px solid var(--border)', background: 'var(--card)', 
-                  color: 'var(--text)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                  fontSize: '1rem', fontWeight: '500'
-                }}
-              />
+            <div style={{ position: 'absolute', top: 10, left: 10, right: 10, zIndex: 1000 }}>
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type="text" 
+                  placeholder="Buscar nombre, CI/DNI, teléfono..." 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  style={{ 
+                    width: '100%', padding: '10px 40px 10px 14px', borderRadius: 24, 
+                    border: 'none', background: 'var(--card)', 
+                    color: 'var(--text)', boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+                    fontSize: '0.9rem'
+                  }}
+                />
+                {searchQuery && (
+                  <button onClick={() => setSearchQuery('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', fontSize: '1.1rem', cursor: 'pointer', color: 'var(--muted)', padding: 4 }}>✕</button>
+                )}
+              </div>
             </div>
 
             <div className="map-half">
@@ -184,17 +187,33 @@ export default function PublicPage() {
                   {recentReports.length === 0 ? (
                     <p className="fs-xs text-muted">No hay reportes recientes.</p>
                   ) : (
-                    recentReports.map(r => (
+                     recentReports.map(r => {
+                      const timeAgo = r.reportedAt ? (() => {
+                        const mins = Math.round((new Date() - new Date(r.reportedAt)) / 60000);
+                        if (mins < 60) return `hace ${mins}m`;
+                        const hrs = Math.round(mins / 60);
+                        if (hrs < 24) return `hace ${hrs}h`;
+                        return `hace ${Math.round(hrs / 24)}d`;
+                      })() : '';
+                      const typeColor = r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)';
+                      return (
                       <div key={r._id} className="recent-card" 
                            onClick={() => setSelectedReport(r)}
-                           style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`, cursor: 'pointer' }}>
-                        <div style={{ flex: 1 }}>
-                          <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
-                          <div className="fs-xs text-gray mt-1">
+                           style={{ borderLeft: `4px solid ${typeColor}`, cursor: 'pointer' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span className="fw-700" style={{ fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Atrapados'}
+                            </span>
+                            {r.encontrado && <span style={{ background: '#dcfce7', color: '#166534', padding: '1px 6px', borderRadius: 8, fontSize: '0.6rem', fontWeight: 700, flexShrink: 0 }}>Encontrado</span>}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {r.ultimaUbicacion || 'Ubicación marcada'}
                           </div>
                         </div>
+                        {timeAgo && <span style={{ fontSize: '0.65rem', color: 'var(--muted)', flexShrink: 0 }}>{timeAgo}</span>}
                       </div>
+                    );}
                     ))
                   )}
                 </>
@@ -265,23 +284,19 @@ export default function PublicPage() {
         )}
       </div>
 
-      {/* Bottom Navigation */}
       <nav className="bottom-nav">
-        <button className={`nav-item ${tab === 'inicio' ? 'active' : ''}`} onClick={() => setTab('inicio')}>
-          🏠 Inicio
-        </button>
-        <button className={`nav-item ${tab === 'reportar' ? 'active' : ''}`} onClick={() => setTab('reportar')}>
-          📝 Reportar
-        </button>
-        <button className={`nav-item ${tab === 'directorio' ? 'active' : ''}`} onClick={() => setTab('directorio')}>
-          📋 Directorio
-        </button>
-        <button className={`nav-item ${tab === 'guia' ? 'active' : ''}`} onClick={() => setTab('guia')}>
-          📖 Guía
-        </button>
-        <button className={`nav-item ${tab === 'emergencia' ? 'active' : ''}`} onClick={() => setTab('emergencia')}>
-          📞 Emergencia
-        </button>
+        {[
+          { id: 'inicio', icon: '🗺️', label: 'Mapa' },
+          { id: 'reportar', icon: '➕', label: 'Reportar' },
+          { id: 'directorio', icon: '📋', label: 'Directorio' },
+          { id: 'guia', icon: '📖', label: 'Guía' },
+          { id: 'emergencia', icon: '🆘', label: '911' },
+        ].map(n => (
+          <button key={n.id} className={`nav-item ${tab === n.id ? 'active' : ''}`} onClick={() => setTab(n.id)}>
+            <span style={{ fontSize: '1.2rem' }}>{n.icon}</span>
+            <span>{n.label}</span>
+          </button>
+        ))}
       </nav>
 
       {/* Modal form */}
