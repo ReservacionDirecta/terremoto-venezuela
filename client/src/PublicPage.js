@@ -9,7 +9,7 @@ import Mascotas from './components/Mascotas';
 import LeyendaEmergencia from './components/LeyendaEmergencia';
 import GuiaUso from './components/GuiaUso';
 import LoginPage from './LoginPage';
-import { createReport, fetchReports, fetchCriticalZones, updateReport, searchReports } from './api';
+import { createReport, fetchReports, fetchCriticalZones, updateReport, searchReports, fetchFoto } from './api';
 
 export default function PublicPage() {
   const { dark, toggle } = useTheme();
@@ -23,6 +23,8 @@ export default function PublicPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedReport, setSelectedReport] = useState(null);
+  const [activePhoto, setActivePhoto] = useState(null);
+  const [loadingPhoto, setLoadingPhoto] = useState(false);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
@@ -98,6 +100,26 @@ export default function PublicPage() {
   const recentReports = useMemo(() => {
     return [...reports].sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt)).slice(0, 15);
   }, [reports]);
+
+  useEffect(() => {
+    if (!selectedReport) {
+      setActivePhoto(null);
+      return;
+    }
+    // Si ya viene con foto base64/url directo
+    if (selectedReport.foto) {
+      setActivePhoto(selectedReport.foto);
+      return;
+    }
+    // Buscar foto de la API de forma diferida (lazy load) para evitar payloads pesados en el listado inicial
+    setLoadingPhoto(true);
+    fetchFoto(selectedReport._id)
+      .then(fotoData => {
+        if (fotoData) setActivePhoto(fotoData);
+      })
+      .catch(err => console.warn('No se pudo recuperar la foto:', err))
+      .finally(() => setLoadingPhoto(false));
+  }, [selectedReport]);
 
   if (showLogin) return <LoginPage onLogin={() => window.location.reload()} onBack={() => setShowLogin(false)} />;
 
@@ -309,8 +331,12 @@ export default function PublicPage() {
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 450, width: '100%', padding: '24px 20px', borderRadius: 20 }}>
                   {/* Foto del Registro - Full width style */}
             <div style={{ margin: '-24px -20px 20px -20px', position: 'relative', overflow: 'hidden', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
-              {selectedReport.foto ? (
-                <img src={selectedReport.foto} alt="Foto del registro" style={{ width: '100%', height: 280, objectFit: 'cover', display: 'block' }} />
+              {loadingPhoto ? (
+                <div style={{ width: '100%', height: 280, background: 'var(--bg2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="spinner" style={{ width: 24, height: 24, borderWidth: 2 }} />
+                </div>
+              ) : activePhoto ? (
+                <img src={activePhoto} alt="Foto del registro" style={{ width: '100%', height: 280, objectFit: 'cover', display: 'block' }} />
               ) : (
                 <div style={{ width: '100%', height: 180, background: 'var(--bg2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', gap: 8 }}>
                   <span style={{ fontSize: '2rem' }}>📷</span>
