@@ -137,6 +137,7 @@ survivor-heatmap/
 ├── update-all.js               # Actualización masiva de registros existentes
 ├── cleanup-spam.js             # Limpieza de spam en MongoDB
 ├── railway.json                # Configuración de build/deploy
+├── implementation_plan.md      # Plan de migración a Vite + TailwindCSS v4
 ├── .env                        # Variables de entorno
 └── client/                     # React SPA
     ├── public/index.html       # Favicon SVG inline + meta tags
@@ -147,10 +148,10 @@ survivor-heatmap/
         ├── api.js              # HTTP client (auth opcional por endpoint)
         ├── PublicPage.js       # 5 tabs: Mapa · Reportar · Directorio · Guía · 911
         ├── LoginPage.js        # Login super admin
-        ├── AdminPage.js        # Dashboard con stats, zonas, sync
+        ├── AdminPage.js        # Dashboard con 3 tabs: Mapa · Listas · Zonas
         └── components/
             ├── Logo.js             # SVG bandera Venezuela + pin ubicación
-            ├── HeatmapView.js      # Leaflet + heatmap + filtros + epicentro
+            ├── HeatmapView.js      # Leaflet + heatmap + filtros inline + epicentro
             ├── ReportForm.js       # GPS + compresor imagen + drag & drop
             ├── Desaparecidos.js    # Búsqueda full-text + fotos lazy + flag
             ├── Sobrevivientes.js   # Estados de rescate + acciones públicas
@@ -174,6 +175,29 @@ survivor-heatmap/
 | **Tamaño** | ~110 kB JS + ~4 kB CSS (gzip) |
 | **Mobile** | Touch targets ≥42px · Single column · Bottom nav con iconos |
 | **Favicon** | SVG inline: bandera Venezuela tricolor + pin de ubicación |
+
+### Responsive Design
+
+| Componente | Mobile | Desktop |
+|---|---|---|
+| **Topbar Admin** | Logo + título truncado + 3 tabs compactos | Logo + stats + 3 tabs + theme toggle |
+| **Bottom Nav** | 5 items con iconos + scrollbar oculto | 5 items con iconos + labels |
+| **Filtros** | Solo filtro en mapa (HeatmapView) | Solo filtro en mapa (HeatmapView) |
+| **Modales** | Full-width bottom sheet | Centered modal con backdrop blur |
+
+### Estructura de Navegación
+
+**AdminPage** (simplificado):
+- **Mapa** — Vista principal con heatmap, filtros y zonas críticas
+- **Listas** — Combina Desaparecidos + Atrapados en scrollable view
+- **Zonas** — Panel de zonas críticas con scores
+
+**PublicPage** (5 tabs):
+- **Mapa** — Vista pública con búsqueda
+- **Reportar** — Formularios de reporte
+- **Directorio** — Listas de desaparecidos/mascotas/sobrevivientes
+- **Guía** — Instrucciones de uso
+- **911** — Números de emergencia
 
 ---
 
@@ -271,3 +295,25 @@ No se solicita ni gestiona dinero. Solo información para encontrar personas.
 **Contacto:** `soporte@hallados.org`  
 **GitHub:** [ReservacionDirecta/terremoto-venezuela](https://github.com/ReservacionDirecta/terremoto-venezuela)  
 **Producción:** [halladosorg.up.railway.app](https://halladosorg.up.railway.app)
+
+---
+
+## 📋 Roadmap
+
+### Completado ✅
+- [x] Eliminar filtro duplicado de AdminPage (mantener solo en HeatmapView)
+- [x] Simplificar navbar AdminPage (5 → 3 pestañas: Mapa, Listas, Zonas)
+- [x] Mejorar responsividad del topbar (truncar título, ocultar stats en móvil)
+- [x] Agregar estilos responsivos al bottom-nav para pantallas < 380px
+- [x] Corregir error de sintaxis JSX (fragment wrapper)
+
+### En progreso 🚧
+- [ ] Migrar de CRA a Vite (ver `implementation_plan.md`)
+- [ ] Migrar CSS a TailwindCSS v4
+- [ ] Implementar dark mode nativo con Tailwind v4
+
+### Futuro 🔮
+- [ ] Service Worker para modo offline
+- [ ] Notificaciones push para actualizaciones
+- [ ] Exportar datos a CSV/PDF
+- [ ] Integración con WhatsApp Business API

@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════
+   Hallados — Design System v6 (Tailwind v4)
+   Inter + system fallback · WCAG AA
+   🔴 #dc2626  🔵 #2563eb  🟡 #eab308
+   ═══════════════════════════════════════════════ */
+
+/* Dark mode: synced with data-theme attribute from ThemeContext */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* ─── Theme tokens as CSS custom properties ──── */
+@theme {
+  --color-surface: #ffffff;
+  --color-bg: #f8fafc;
+  --color-bg2: #f1f5f9;
+  --color-bg3: #e2e8f0;
+  --color-txt: #0f172a;
+  --color-txt2: #334155;
+  --color-txt3: #64748b;
+  --color-muted: #94a3b8;
+  --color-border: #e2e8f0;
+  --color-border2: #cbd5e1;
+}
+
+/* ─── Dark overrides ─────────────────────────── */
+[data-theme="dark"] {
+  --color-surface: #152033;
+  --color-bg: #0b1120;
+  --color-bg2: #1a2744;
+  --color-bg3: #253552;
+  --color-txt: #f1f5f9;
+  --color-txt2: #cbd5e1;
+  --color-txt3: #94a3b8;
+  --color-muted: #64748b;
+  --color-border: #1e2d45;
+  --color-border2: #2d3f5a;
+}
+
+/* ─── Base reset ─────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, #root { height: 100%; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--color-txt);
+    background: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    transition: background 0.25s, color 0.25s;
+  }
+  h1, h2, h3, h4 { line-height: 1.25; font-weight: 700; color: var(--color-txt); }
+  a { color: #2563eb; text-decoration: none; font-weight: 500; }
+  a:hover { text-decoration: underline; }
+  input, textarea, select {
+    width: 100%; padding: 10px 14px;
+    border: 1.5px solid var(--color-border2);
+    border-radius: 8px; background: var(--color-surface);
+    color: var(--color-txt); font-size: 0.82rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none; border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  select {
+    cursor: pointer; appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2 4l4 4 4-4' fill='none' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--color-border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-muted); }
+}
+
+/* ─── Animations ─────────────────────────────── */
+@layer utilities {
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse-glow {
+    0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.5); }
+    70% { box-shadow: 0 0 0 16px rgba(220,38,38,0); }
+    100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+  }
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, var(--color-border) 25%, var(--color-bg) 50%, var(--color-border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+/* ─── Map-specific (Leaflet needs these) ─────── */
+@layer components {
+  .map-wrap {
+    position: relative; flex: 1;
+    display: flex; flex-direction: column; min-height: 0;
+  }
+  #map-container {
+    flex: 1; position: relative; z-index: 1;
+  }
+  .split-home {
+    position: relative; flex: 1;
+    display: flex; flex-direction: column;
+    min-height: 0; overflow: hidden;
+  }
+  .map-half {
+    position: relative; flex: 1; min-height: 0;
+  }
+  .floating-search-bar {
+    position: absolute; top: 12px; left: 50%;
+    transform: translateX(-50%); z-index: 600;
+    width: calc(100% - 90px); max-width: 440px;
+  }
+  @media (max-width: 640px) {
+    .floating-search-bar { width: calc(100% - 24px); top: 10px; }
+  }
+
+  /* Legend (sits on dark map tiles, always dark glass) */
+  .legend {
+    position: absolute; bottom: 72px; left: 12px; z-index: 150;
+    background: rgba(15,23,42,0.85); backdrop-filter: blur(12px);
+    padding: 8px 12px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    font-size: 0.72rem; color: rgba(255,255,255,0.9);
+  }
+  .legend-bar {
+    width: 120px; height: 6px; border-radius: 3px;
+    background: linear-gradient(to right, #00c853, #ffd600, #ff6d00, #d50000);
+    margin: 3px 0;
+  }
+  .legend-labels {
+    display: flex; justify-content: space-between;
+    color: rgba(255,255,255,0.6); font-size: 0.6rem;
+  }
+}
