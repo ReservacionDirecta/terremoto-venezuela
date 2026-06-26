@@ -9,7 +9,7 @@ import Mascotas from './components/Mascotas';
 import LeyendaEmergencia from './components/LeyendaEmergencia';
 import GuiaUso from './components/GuiaUso';
 import LoginPage from './LoginPage';
-import { createReport, fetchReports, fetchCriticalZones } from './api';
+import { createReport, fetchReports, fetchCriticalZones, updateReport } from './api';
 
 export default function PublicPage() {
   const { dark, toggle } = useTheme();
@@ -22,6 +22,7 @@ export default function PublicPage() {
   const [zones, setZones] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedReport, setSelectedReport] = useState(null);
 
   const loadPublicData = useCallback(async () => {
     setLoading(true);
@@ -59,6 +60,20 @@ export default function PublicPage() {
       loadPublicData();
     } catch (err) {
       alert('Error al enviar: ' + err.message);
+    }
+  };
+
+  const handleUpdateStatus = async (status, encontrado) => {
+    if (!selectedReport) return;
+    if (!window.confirm(`¿Confirmar cambio de estado a "${status}"?`)) return;
+    try {
+      await updateReport(selectedReport._id, { status, encontrado });
+      setSelectedReport(null);
+      setSuccess('Estado actualizado correctamente.');
+      setTimeout(() => setSuccess(''), 5000);
+      loadPublicData();
+    } catch (err) {
+      alert('Error al actualizar: ' + err.message);
     }
   };
 
@@ -103,7 +118,7 @@ export default function PublicPage() {
               {loading && reports.length === 0 ? (
                 <div className="empty-state"><div className="spinner" style={{margin:'20px auto'}}/></div>
               ) : (
-                <HeatmapView reports={reports} criticalZones={zones} filter="all" onFilterChange={() => {}} compact />
+                <HeatmapView reports={reports} criticalZones={zones} filter="all" onFilterChange={() => {}} onReportClick={setSelectedReport} compact />
               )}
             </div>
             <div className="list-half">
@@ -112,7 +127,9 @@ export default function PublicPage() {
                 <p className="fs-xs text-muted">No hay reportes recientes.</p>
               ) : (
                 recentReports.map(r => (
-                  <div key={r._id} className="recent-card" style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`}}>
+                  <div key={r._id} className="recent-card" 
+                       onClick={() => setSelectedReport(r)}
+                       style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`, cursor: 'pointer' }}>
                     <div style={{ flex: 1 }}>
                       <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
                       <div className="fs-xs text-gray mt-1">
@@ -212,6 +229,67 @@ export default function PublicPage() {
         <div className="modal-overlay" onClick={() => setShowForm(null)} style={{ zIndex: 1000 }}>
           <div className="modal" onClick={e => e.stopPropagation()}>
             <ReportForm tipo={showForm} onSubmit={handleSubmit} onCancel={() => setShowForm(null)} />
+          </div>
+        </div>
+      )}
+
+      {/* Ficha Detallada (ReportDetailModal) */}
+      {selectedReport && (
+        <div className="modal-overlay" onClick={() => setSelectedReport(null)} style={{ zIndex: 3000 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 450, width: '90%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+              <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text)' }}>
+                Ficha de {selectedReport.tipo.charAt(0).toUpperCase() + selectedReport.tipo.slice(1)}
+              </h2>
+              <button onClick={() => setSelectedReport(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text)' }}>✕</button>
+            </div>
+            
+            <div style={{ marginBottom: 20 }}>
+              {(selectedReport.tipo === 'desaparecido' || selectedReport.tipo === 'mascota') && (
+                <p style={{ margin: '4px 0', fontSize: '1.05rem' }}><strong>Nombre:</strong> {selectedReport.nombre || 'Desconocido'}</p>
+              )}
+              {(selectedReport.tipo === 'desaparecido') && (
+                <p style={{ margin: '4px 0' }}><strong>Edad:</strong> {selectedReport.edad || 'N/A'}</p>
+              )}
+              {(selectedReport.tipo === 'sobreviviente') && (
+                <p style={{ margin: '4px 0' }}><strong>Personas Atrapadas:</strong> {selectedReport.survivorsCount || 1}</p>
+              )}
+              <p style={{ margin: '4px 0' }}><strong>Estado Actual:</strong> <span style={{ padding: '2px 6px', background: '#f1f5f9', borderRadius: 4, fontWeight: 'bold' }}>{selectedReport.status || (selectedReport.encontrado ? 'Localizado' : 'Sin localizar')}</span></p>
+              <p style={{ margin: '4px 0' }}><strong>Ubicación:</strong> {selectedReport.ultimaUbicacion || `${selectedReport.lat.toFixed(4)}, ${selectedReport.lng.toFixed(4)}`}</p>
+              <p style={{ margin: '4px 0' }}><strong>Reportado hace:</strong> {selectedReport.reportedAt ? Math.round((new Date() - new Date(selectedReport.reportedAt))/(1000*60*60))+' horas' : 'N/A'}</p>
+              
+              {selectedReport.description && (
+                <div style={{ marginTop: 10, padding: 10, background: 'var(--bg)', borderRadius: 6, fontSize: '0.9rem', color: 'var(--text2)' }}>
+                  {selectedReport.description}
+                </div>
+              )}
+            </div>
+
+            <h4 style={{ margin: '0 0 10px 0', borderBottom: '1px solid var(--border)', paddingBottom: 5 }}>Actualizar Estado</h4>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {(selectedReport.tipo === 'desaparecido' || selectedReport.tipo === 'mascota') && !selectedReport.encontrado && (
+                <button className="btn" style={{ background: 'var(--green)', color: '#fff', padding: '10px' }}
+                        onClick={() => handleUpdateStatus('localizado', true)}>
+                  ✅ Marcar como Localizado
+                </button>
+              )}
+              {selectedReport.tipo === 'sobreviviente' && (
+                <>
+                  <button className="btn" style={{ background: 'var(--yellow)', color: '#000', padding: '10px' }}
+                          onClick={() => handleUpdateStatus('en_proceso', false)}>
+                    🚧 Marcar En Proceso de Rescate
+                  </button>
+                  <button className="btn" style={{ background: 'var(--green)', color: '#fff', padding: '10px' }}
+                          onClick={() => handleUpdateStatus('rescatado', true)}>
+                    ✅ Marcar Rescatados
+                  </button>
+                </>
+              )}
+              <button className="btn btn-secondary" style={{ padding: '10px' }}
+                      onClick={() => handleUpdateStatus('falsa_alarma', false)}>
+                ❌ Marcar Falsa Alarma
+              </button>
+            </div>
           </div>
         </div>
       )}

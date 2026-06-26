@@ -11,7 +11,7 @@ L.Icon.Default.mergeOptions({
 const EPI = [10.35, -68.62];
 const sevColors = { alta:'#dc2626', media:'#eab308', baja:'#2563eb' };
 
-export default function HeatmapView({ reports, criticalZones, filter, onFilterChange, compact }) {
+export default function HeatmapView({ reports, criticalZones, filter, onFilterChange, onReportClick, compact }) {
   const mapRef = useRef(null);
   const heatRef = useRef(null);
   const markersRef = useRef(null);
@@ -24,6 +24,7 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
     status: 'all'
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [selectedCluster, setSelectedCluster] = useState(null);
 
   // ... useEffects keep the same
 
@@ -144,32 +145,9 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
         const icon = L.divIcon({ html: iconHtml, iconSize, iconAnchor });
         const marker = L.marker([cluster.lat, cluster.lng], { icon }).addTo(markersRef.current);
         
-        let popupHtml = `<div style="font-family:system-ui;min-width:220px;max-width:280px;max-height:240px;overflow-y:auto;padding-right:6px;">`;
-        if (count > 1) {
-          popupHtml += `<h4 style="margin:0 0 10px 0;border-bottom:2px solid #eee;padding-bottom:6px;color:#333;">📍 ${count} Reportes agrupados</h4>`;
-        }
-        
-        cluster.reports.forEach((r, idx) => {
-          const isS = r.tipo === 'sobreviviente';
-          const isM = r.tipo === 'mascota';
-          const isExt = r.source === 'external';
-          const c = isExt ? '#2563eb' : isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
-          let title = isS ? 'Sobreviviente '+r.severity : isM ? (r.encontrado ? 'Mascota Encontrada' : 'Mascota Atrapada') : (r.encontrado ? 'Localizado' : 'Desaparecido');
-          if (isExt) title += ' (Cotejado)';
-          
-          popupHtml += `<div style="margin-bottom:12px;border-left:3px solid ${c};padding-left:8px;">`;
-          popupHtml += `<b style="color:${c};display:block;font-size:0.9rem;">${title}</b>`;
-          if (!isS && r.nombre) popupHtml += `<p style="margin:2px 0;font-size:0.85rem;"><b>${r.nombre}</b>${r.edad?' ('+r.edad+')':''}</p>`;
-          if (isS && r.survivorsCount) popupHtml += `<p style="margin:2px 0;font-size:0.85rem;"><strong>Personas:</strong> ${r.survivorsCount}</p>`;
-          if ((isS || isM) && r.description) popupHtml += `<p style="margin:4px 0;font-size:0.8rem;color:#444;">${r.description}</p>`;
-          
-          const timeStr = r.reportedAt ? Math.round((now - new Date(r.reportedAt))/(1000*60*60))+'h' : 'N/A';
-          popupHtml += `<p style="color:#666;font-size:0.7rem;margin:4px 0 0 0;">Estado: <b>${r.status||'N/A'}</b> | Hace: ${timeStr}</p>`;
-          popupHtml += `</div>`;
+        marker.on('click', () => {
+          setSelectedCluster(cluster);
         });
-        
-        popupHtml += `</div>`;
-        marker.bindPopup(popupHtml);
       });
     }
   }, [reports, showMarkers, tactical]);
@@ -204,6 +182,47 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
   return (
     <div className={`map-wrap ${isFullscreen ? 'fullscreen-map' : ''}`} style={isFullscreen ? {position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:9999} : {}}>
       <div id="map-container" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}/>
+      
+      {/* React Modal para el Cluster seleccionado */}
+      {selectedCluster && (
+        <div style={{
+          position: 'absolute', top: 10, left: 10, zIndex: 2000, 
+          background: '#fff', borderRadius: 12, boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+          width: 300, maxHeight: 'calc(100% - 20px)', display: 'flex', flexDirection: 'column'
+        }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #eee', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
+              📍 {selectedCluster.reports.length} {selectedCluster.reports.length === 1 ? 'Reporte' : 'Reportes'}
+            </h3>
+            <button onClick={() => setSelectedCluster(null)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', padding: 0 }}>✕</button>
+          </div>
+          <div style={{ padding: '12px 16px', overflowY: 'auto', flex: 1 }}>
+            {selectedCluster.reports.map(r => {
+              const isS = r.tipo === 'sobreviviente';
+              const isM = r.tipo === 'mascota';
+              const isExt = r.source === 'external';
+              const c = isExt ? '#2563eb' : isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
+              let title = isS ? 'Sobreviviente '+r.severity : isM ? (r.encontrado ? 'Mascota Encontrada' : 'Mascota Atrapada') : (r.encontrado ? 'Localizado' : 'Desaparecido');
+              
+              return (
+                <div key={r._id} 
+                     onClick={() => { if (onReportClick) onReportClick(r); }}
+                     style={{
+                       marginBottom: 12, borderLeft: `4px solid ${c}`, paddingLeft: 12, 
+                       cursor: 'pointer', paddingBottom: 12, borderBottom: '1px solid #f5f5f5',
+                       background: 'var(--card-hover)', transition: 'background 0.2s', borderRadius: '0 4px 4px 0'
+                     }}>
+                  <b style={{ color: c, display: 'block', fontSize: '0.9rem' }}>{title}</b>
+                  {(!isS && r.nombre) && <p style={{ margin: '2px 0', fontSize: '0.9rem', fontWeight: 700 }}>{r.nombre}</p>}
+                  {(isS && r.survivorsCount) && <p style={{ margin: '2px 0', fontSize: '0.85rem' }}><strong>Personas:</strong> {r.survivorsCount}</p>}
+                  <p style={{ color: '#666', fontSize: '0.75rem', margin: '4px 0 0 0' }}>Estado: <b>{r.status||'N/A'}</b></p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Panel de Filtros Tácticos Flotante */}
       <div style={{
         position:'absolute', top:10, right:10, zIndex:1000,
