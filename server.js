@@ -9,6 +9,8 @@ const reportsRouter = require('./routes/reports');
 const authRouter = require('./routes/auth');
 const externalRouter = require('./routes/external');
 const User = require('./models/User');
+const cron = require('node-cron');
+const { syncExternal } = require('./services/syncCron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;

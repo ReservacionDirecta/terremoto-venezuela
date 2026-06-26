@@ -155,93 +155,9 @@ export default function PublicPage() {
               {loading && reports.length === 0 ? (
                 <div className="empty-state"><div className="spinner" style={{margin:'20px auto'}}/></div>
               ) : (
-                <HeatmapView reports={reports} criticalZones={zones} filter="all" onFilterChange={() => {}} onReportClick={setSelectedReport} selectedReport={selectedReport} compact />
+                <HeatmapView reports={searchResults || reports} criticalZones={zones} filter="all" onFilterChange={() => {}} onReportClick={setSelectedReport} selectedReport={selectedReport} compact />
               )}
             </div>
-
-            {/* Bottom sheet toggle + panel */}
-            {showPanel ? (
-              <div className="list-half">
-                {/* Handle bar + close */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, position: 'relative' }}>
-                  <div style={{ width: 36, height: 4, background: '#cbd5e1', borderRadius: 2 }}></div>
-                  <button onClick={() => setShowPanel(false)} style={{ position: 'absolute', right: 0, top: -2, background: 'none', border: 'none', fontSize: '0.75rem', color: 'var(--muted)', cursor: 'pointer', padding: '2px 6px' }}>▼ Ocultar</button>
-                </div>
-
-                {searchQuery.trim() ? (
-                  <>
-                    <h3 className="fs-sm fw-700 text-gray mb-2">Resultados de Búsqueda {isSearching && <span className="spinner" style={{width:12,height:12,marginLeft:6,borderWidth:2,display:'inline-block'}}/>}</h3>
-                    {searchResults && searchResults.length === 0 ? (
-                      <p className="fs-xs text-muted">No se encontraron resultados.</p>
-                    ) : (
-                      (searchResults || []).map(r => (
-                        <div key={r._id} className="recent-card" 
-                             onClick={() => setSelectedReport(r)}
-                             style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`, cursor: 'pointer' }}>
-                          <div style={{ flex: 1 }}>
-                            <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
-                            <div className="fs-xs text-gray mt-1">
-                              {r.identificacion && <span style={{display:'block',color:'#666'}}>CI/DNI: {r.identificacion}</span>}
-                              {r.ultimaUbicacion || 'Ubicación marcada'}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <h3 className="fs-sm fw-700 text-gray mb-2">Últimos reportes</h3>
-                    {recentReports.length === 0 ? (
-                      <p className="fs-xs text-muted">No hay reportes recientes.</p>
-                    ) : (
-                       recentReports.map(r => {
-                        const timeAgo = r.reportedAt ? (() => {
-                          const mins = Math.round((new Date() - new Date(r.reportedAt)) / 60000);
-                          if (mins < 60) return `hace ${mins}m`;
-                          const hrs = Math.round(mins / 60);
-                          if (hrs < 24) return `hace ${hrs}h`;
-                          return `hace ${Math.round(hrs / 24)}d`;
-                        })() : '';
-                        const typeColor = r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)';
-                        return (
-                        <div key={r._id} className="recent-card" 
-                             onClick={() => setSelectedReport(r)}
-                             style={{ borderLeft: `4px solid ${typeColor}`, cursor: 'pointer' }}>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span className="fw-700" style={{ fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Atrapados'}
-                              </span>
-                              {r.encontrado && <span style={{ background: '#dcfce7', color: '#166534', padding: '1px 6px', borderRadius: 8, fontSize: '0.6rem', fontWeight: 700, flexShrink: 0 }}>Encontrado</span>}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {r.ultimaUbicacion || 'Ubicación marcada'}
-                            </div>
-                          </div>
-                          {timeAgo && <span style={{ fontSize: '0.65rem', color: 'var(--muted)', flexShrink: 0 }}>{timeAgo}</span>}
-                        </div>
-                      );}
-                      ))
-                    }
-                  </>
-                )}
-              </div>
-            ) : (
-              /* Floating button to bring the panel back */
-              <button 
-                onClick={() => setShowPanel(true)}
-                style={{
-                  position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)',
-                  zIndex: 200, background: 'var(--card)', border: 'none',
-                  borderRadius: 24, padding: '8px 20px',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
-                  cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700,
-                  color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6
-                }}>
-              {`Reportes (${reports.length})`}
-              </button>
-            )}
           </div>
         )}
 
@@ -349,7 +265,20 @@ export default function PublicPage() {
       {selectedReport && (
         <div className="modal-overlay" onClick={() => setSelectedReport(null)} style={{ zIndex: 3000, padding: 15 }}>
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 450, width: '100%', padding: '24px 20px', borderRadius: 20 }}>
-            
+                  {/* Foto del Registro - Full width style */}
+            <div style={{ margin: '-24px -20px 20px -20px', position: 'relative', overflow: 'hidden', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+              {selectedReport.foto ? (
+                <img src={selectedReport.foto} alt="Foto del registro" style={{ width: '100%', height: 280, objectFit: 'cover', display: 'block' }} />
+              ) : (
+                <div style={{ width: '100%', height: 180, background: 'var(--bg2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', gap: 8 }}>
+                  <span style={{ fontSize: '2rem' }}>📷</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Sin foto disponible</span>
+                </div>
+              )}
+              {/* Floating Close Button */}
+              <button onClick={() => setSelectedReport(null)} style={{ position: 'absolute', top: 12, right: 12, background: 'rgba(255, 255, 255, 0.9)', border: 'none', width: 36, height: 36, borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', color: '#111', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.2)', zIndex: 10 }}>✕</button>
+            </div>
+
             {/* Header / Banner */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
               <div>
@@ -373,19 +302,6 @@ export default function PublicPage() {
                   <p style={{ margin: '0px', fontSize: '0.9rem', color: 'var(--text3)' }}>CI/DNI: {selectedReport.identificacion}</p>
                 )}
               </div>
-              <button onClick={() => setSelectedReport(null)} style={{ background: 'rgb(241, 245, 249)', borderStyle: 'none', width: '36px', height: '36px', borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-            </div>
-
-            {/* Foto del Registro */}
-            <div style={{ marginBottom: 20 }}>
-              {selectedReport.foto ? (
-                <img src={selectedReport.foto} alt="Foto del registro" style={{ width: '100%', height: 250, objectFit: 'cover', borderRadius: 16 }} />
-              ) : (
-                <div style={{ width: '100%', height: 180, borderRadius: 16, background: 'var(--bg)', border: '2px dashed var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', gap: 8 }}>
-                  <span style={{ fontSize: '1.5rem' }}>📷</span>
-                  <span style={{ fontSize: '0.85rem' }}>Sin foto disponible</span>
-                </div>
-              )}
             </div>
 
             {/* Bloques de Info */}
@@ -423,7 +339,7 @@ export default function PublicPage() {
 
             <hr style={{ borderTop: '1px solid var(--border)', borderStyle: 'none', margin: '0px 0px 20px' }} />
 
-            {/* Acciones de Localización */}
+            {/* Acciones de Localización para todo público */}
             <div style={{ marginBottom: '24px' }}>
               <h3 style={{ fontSize: '1.1rem', margin: '0px 0px 4px' }}>¿Ya lograste comunicarte?</h3>
               <p style={{ fontSize: '0.85rem', color: 'var(--text2)', margin: '0px 0px 12px' }}>Márcala como localizada y su familia podrá respirar tranquila.</p>
@@ -432,7 +348,7 @@ export default function PublicPage() {
                         onClick={() => handleUpdateStatus('localizado', true)}>
                   Marcar como localizada
                 </button>
-                <button className="btn btn-block btn-secondary" style={{ padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
+                <button className="btn btn-block btn-secondary" style={{ padding: '14px', borderRadius: 12, fontSize: '1.05rem', background: 'var(--bg3)', color: 'var(--text)', borderColor: 'var(--border)' }}
                         onClick={() => handleUpdateStatus('falsa_alarma', false)}>
                   Reporte Falso / Error
                 </button>
