@@ -27,7 +27,7 @@ export default function AdminPage({ onLogout }) {
       const [r, z, s] = await Promise.all([
         fetchReports(), fetchCriticalZones(2, 3, 'all'), fetchStats()
       ]);
-      setReports(r); setZones(z.zones || []); setStats(s); setError(null);
+      setReports(r && r.data ? r.data : (Array.isArray(r) ? r : [])); setZones(z.zones || []); setStats(s); setError(null);
     } catch (err) { setError(err.message); }
     finally { setLoading(false); }
   }, []);

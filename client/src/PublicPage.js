@@ -36,7 +36,8 @@ export default function PublicPage() {
       const [r, z] = await Promise.all([
         fetchReports(), fetchCriticalZones(2, 3, 'all')
       ]);
-      setReports(Array.isArray(r) ? r : []);
+      const reportsData = r && r.data ? r.data : (Array.isArray(r) ? r : []);
+      setReports(reportsData);
       setZones(z && z.zones ? z.zones : []);
     } catch (err) {
       console.error('Error cargando datos públicos:', err);
