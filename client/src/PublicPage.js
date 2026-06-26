@@ -71,9 +71,11 @@ export default function PublicPage() {
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div className="topbar" style={{ padding: '8px 12px' }}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" style={{ flex: 1, minWidth: 0 }}>
           <Logo size={24} />
-          <h1 style={{ fontSize: '1.1rem' }}>📍 Hallados</h1>
+          <h1 style={{ fontSize: '1rem', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            Hallados | Mapa de desaparecidos y atrapados | Terremoto Venezuela
+          </h1>
         </div>
         <div className="flex items-center gap-2">
           <button className="theme-toggle" onClick={toggle} style={{ padding: 4 }}>{dark ? '☀️' : '🌙'}</button>

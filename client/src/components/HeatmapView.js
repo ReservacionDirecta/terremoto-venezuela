@@ -16,8 +16,16 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
   const heatRef = useRef(null);
   const markersRef = useRef(null);
   const [showMarkers, setShowMarkers] = useState(true);
+  
+  const [tactical, setTactical] = useState({
+    tipo: filter || 'all',
+    time: 'all',
+    severity: 'all',
+    status: 'all'
+  });
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // ... (keep useEffects the same but adjust rendering below)
+  // ... useEffects keep the same
 
   useEffect(() => {
     if (mapRef.current) return;
@@ -43,46 +51,128 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
     if (heatRef.current) { map.removeLayer(heatRef.current); heatRef.current = null; }
     markersRef.current?.clearLayers();
 
-    const data = reports.filter(r => r.tipo !== 'mascota').map(r => {
+    const now = new Date();
+    const filteredReports = reports.filter(r => {
+      if (tactical.tipo !== 'all') {
+        if (r.tipo !== tactical.tipo) return false;
+      }
+      if (tactical.time !== 'all' && r.reportedAt) {
+        const hoursDiff = (now - new Date(r.reportedAt)) / (1000 * 60 * 60);
+        if (tactical.time === '1h' && hoursDiff > 1) return false;
+        if (tactical.time === '6h' && hoursDiff > 6) return false;
+        if (tactical.time === '24h' && hoursDiff > 24) return false;
+      }
+      if (tactical.severity !== 'all') {
+        if (r.tipo !== 'sobreviviente') return false;
+        if (r.severity !== tactical.severity) return false;
+      }
+      if (tactical.status !== 'all') {
+        if (r.status && r.status !== tactical.status) return false;
+      }
+      return true;
+    });
+
+    const data = filteredReports.filter(r => r.tipo !== 'mascota').map(r => {
+      let recencyBoost = 1;
+      if (r.reportedAt) {
+        const hoursDiff = (now - new Date(r.reportedAt)) / (1000 * 60 * 60);
+        if (hoursDiff <= 1) recencyBoost = 1.5;
+        else if (hoursDiff <= 6) recencyBoost = 1.2;
+      }
       let i;
-      if (r.tipo === 'sobreviviente') i = (r.severity==='alta'?1:r.severity==='media'?0.6:0.3)*Math.min((r.survivorsCount||1)/5,2);
-      else i = r.encontrado ? 0.15 : 0.8;
+      if (r.tipo === 'sobreviviente') {
+        let sevWeight = r.severity === 'alta' ? 1.5 : r.severity === 'media' ? 0.8 : 0.4;
+        let countWeight = Math.min((r.survivorsCount || 1) / 2, 3);
+        i = sevWeight * countWeight * recencyBoost;
+      }
+      else i = r.encontrado ? 0.2 : 1.0 * recencyBoost;
       return [r.lat, r.lng, i];
     });
 
     if (data.length) {
-      heatRef.current = L.heatLayer(data, { radius: 28, blur: 18, max: 1.2,
-        gradient: { 0:'#00c853', 0.3:'#64dd17', 0.5:'#ffd600', 0.7:'#ff6d00', 0.9:'#dd2c00', 1:'#d50000' }
+      // Heatmap mucho más evidente: radio y blur aumentados
+      heatRef.current = L.heatLayer(data, { radius: 38, blur: 25, max: 1.5,
+        gradient: { 0:'#00c853', 0.2:'#64dd17', 0.4:'#ffd600', 0.6:'#ff6d00', 0.8:'#dd2c00', 1:'#b91c1c' }
       }).addTo(map);
-      const b = L.latLngBounds(reports.map(r => [r.lat, r.lng]));
+      const b = L.latLngBounds(filteredReports.map(r => [r.lat, r.lng]));
       if (b.isValid()) map.fitBounds(b, { padding: [40,40], maxZoom: 13 });
     }
 
     if (showMarkers) {
-      reports.forEach(r => {
-        const isS = r.tipo === 'sobreviviente';
-        const isExt = r.source === 'external';
-        const isM = r.tipo === 'mascota';
-        const c = isExt ? '#2563eb' : isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
-        const icon = L.divIcon({
-          html: `<div style="width:14px;height:14px;background:${c};border:2px solid #fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
-          iconSize: [14,14], iconAnchor: [7,7]
+      // Clustering manual (aprox 20-30 metros de radio)
+      const clusters = [];
+      const clusterDist = 0.0003; 
+
+      filteredReports.forEach(r => {
+        let found = false;
+        for (let c of clusters) {
+          if (Math.abs(c.lat - r.lat) < clusterDist && Math.abs(c.lng - r.lng) < clusterDist) {
+            c.reports.push(r);
+            found = true;
+            break;
+          }
+        }
+        if (!found) clusters.push({ lat: r.lat, lng: r.lng, reports: [r] });
+      });
+
+      clusters.forEach(cluster => {
+        const count = cluster.reports.length;
+        const hasCritical = cluster.reports.some(r => r.tipo === 'sobreviviente' && r.severity === 'alta');
+        const isRecent = cluster.reports.some(r => r.reportedAt && ((now - new Date(r.reportedAt)) / (1000 * 60 * 60)) <= 1);
+        
+        let iconHtml, iconSize, iconAnchor;
+        
+        if (count === 1) {
+          // Single marker
+          const r = cluster.reports[0];
+          const isS = r.tipo === 'sobreviviente';
+          const isExt = r.source === 'external';
+          const c = isExt ? '#2563eb' : isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
+          const bs = (hasCritical || isRecent) ? '3px solid #fff' : '1.5px solid #fff';
+          const size = (hasCritical || isRecent) ? 18 : 14;
+          iconHtml = `<div style="width:${size}px;height:${size}px;background:${c};border:${bs};border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`;
+          iconSize = [size, size];
+          iconAnchor = [size/2, size/2];
+        } else {
+          // Cluster marker
+          const bg = hasCritical ? '#dc2626' : isRecent ? '#f97316' : '#2563eb';
+          iconHtml = `<div style="width:28px;height:28px;background:${bg};border:3px solid #fff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.5);">${count}</div>`;
+          iconSize = [28, 28];
+          iconAnchor = [14, 14];
+        }
+
+        const icon = L.divIcon({ html: iconHtml, iconSize, iconAnchor });
+        const marker = L.marker([cluster.lat, cluster.lng], { icon }).addTo(markersRef.current);
+        
+        let popupHtml = `<div style="font-family:system-ui;min-width:220px;max-width:280px;max-height:240px;overflow-y:auto;padding-right:6px;">`;
+        if (count > 1) {
+          popupHtml += `<h4 style="margin:0 0 10px 0;border-bottom:2px solid #eee;padding-bottom:6px;color:#333;">📍 ${count} Reportes agrupados</h4>`;
+        }
+        
+        cluster.reports.forEach((r, idx) => {
+          const isS = r.tipo === 'sobreviviente';
+          const isM = r.tipo === 'mascota';
+          const isExt = r.source === 'external';
+          const c = isExt ? '#2563eb' : isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
+          let title = isS ? 'Sobreviviente '+r.severity : isM ? (r.encontrado ? 'Mascota Encontrada' : 'Mascota Atrapada') : (r.encontrado ? 'Localizado' : 'Desaparecido');
+          if (isExt) title += ' (Cotejado)';
+          
+          popupHtml += `<div style="margin-bottom:12px;border-left:3px solid ${c};padding-left:8px;">`;
+          popupHtml += `<b style="color:${c};display:block;font-size:0.9rem;">${title}</b>`;
+          if (!isS && r.nombre) popupHtml += `<p style="margin:2px 0;font-size:0.85rem;"><b>${r.nombre}</b>${r.edad?' ('+r.edad+')':''}</p>`;
+          if (isS && r.survivorsCount) popupHtml += `<p style="margin:2px 0;font-size:0.85rem;"><strong>Personas:</strong> ${r.survivorsCount}</p>`;
+          if ((isS || isM) && r.description) popupHtml += `<p style="margin:4px 0;font-size:0.8rem;color:#444;">${r.description}</p>`;
+          
+          const timeStr = r.reportedAt ? Math.round((now - new Date(r.reportedAt))/(1000*60*60))+'h' : 'N/A';
+          popupHtml += `<p style="color:#666;font-size:0.7rem;margin:4px 0 0 0;">Estado: <b>${r.status||'N/A'}</b> | Hace: ${timeStr}</p>`;
+          popupHtml += `</div>`;
         });
         
-        let title = isS ? 'Sobreviviente '+r.severity : isM ? (r.encontrado ? 'Mascota Encontrada' : 'Mascota Atrapada/Perdida') : (r.encontrado ? 'Localizado' : 'Desaparecido');
-        if (isExt) title += ' (Cotejado)';
-        const marker = L.marker([r.lat, r.lng], { icon }).addTo(markersRef.current);
-        marker.bindPopup(`
-          <div style="font-family:system-ui;min-width:200px">
-            <b style="color:${c}">${title}</b>
-            ${(!isS && r.nombre) ? `<p style="margin:4px 0"><b>${r.nombre}</b>${r.edad?' ('+r.edad+')':''}</p>` : ''}
-            ${(isS || isM) ? `<p>${r.description || ''}</p>` : ''}
-            ${isS ? `<p><strong>Personas:</strong> ${r.survivorsCount}</p>` : ''}
-            <p style="color:#666;font-size:0.7rem">Ubicación: ${r.ultimaUbicacion||r.lat.toFixed(4)+', '+r.lng.toFixed(4)}</p>
-          </div>`);
+        popupHtml += `</div>`;
+        marker.bindPopup(popupHtml);
       });
     }
-  }, [reports, showMarkers]);
+  }, [reports, showMarkers, tactical]);
 
   useEffect(() => {
     const map = mapRef.current; if (!map) return;
@@ -95,6 +185,13 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
     });
   }, [criticalZones]);
 
+  // Refresca el tamaño del mapa cuando cambia el estado de fullscreen
+  useEffect(() => {
+    if (mapRef.current) {
+      setTimeout(() => mapRef.current.invalidateSize(), 300);
+    }
+  }, [isFullscreen]);
+
   const filters = [
     {k:'all',l:'Todos'},
     {k:'desaparecido',l:'Desaparecidos'},
@@ -105,29 +202,56 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
   const localCount = reports.filter(r => r.source !== 'external').length;
 
   return (
-    <div className="map-wrap">
+    <div className={`map-wrap ${isFullscreen ? 'fullscreen-map' : ''}`} style={isFullscreen ? {position:'fixed', top:0, left:0, right:0, bottom:0, zIndex:9999} : {}}>
       <div id="map-container" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}/>
-      {/* Filtro visible tipo topbar */}
-      {!compact && (
-        <div style={{
-          position:'absolute',top:0,left:0,right:0,zIndex:160,
-          background:'rgba(255,255,255,0.96)',padding:'8px 12px',
-          borderBottom:'2px solid #eee',display:'flex',alignItems:'center',gap:8,flexWrap:'wrap'
-        }}>
-          <span className="fs-xs fw-700 text-gray" style={{whiteSpace:'nowrap'}}>Mostrar en mapa:</span>
+      {/* Panel de Filtros Tácticos Flotante */}
+      <div style={{
+        position:'absolute', top:10, right:10, zIndex:1000,
+        background:'rgba(255,255,255,0.95)', padding:'8px 12px',
+        borderRadius:'8px', boxShadow:'0 2px 8px rgba(0,0,0,0.2)',
+        display:'flex', flexDirection:'column', gap:8, maxWidth:'calc(100vw - 60px)'
+      }}>
+        <div className="flex items-center gap-2 flex-wrap">
           {filters.map(x => (
             <button key={x.k}
-                    className={`btn btn-sm ${filter===x.k?'btn-outline active':'btn-outline'}`}
-                    onClick={()=>onFilterChange(x.k)}>
-              {x.l} <span style={{opacity:0.6}}>({x.k === 'all' ? reports.length : reports.filter(r => r.tipo === x.k).length})</span>
+                    className={`btn btn-sm ${tactical.tipo===x.k?'btn-outline active':'btn-outline'}`}
+                    onClick={() => {
+                      setTactical({...tactical, tipo: x.k});
+                      if (onFilterChange) onFilterChange(x.k);
+                    }} style={{padding:'2px 8px'}}>
+              {x.l}
             </button>
           ))}
-          {extCount > 0 && <span className="fs-xs" style={{color:'#2563eb'}}>🌐 {extCount} externos</span>}
-          <label className="flex items-center gap-1 fs-xs" style={{cursor:'pointer',marginLeft:'auto'}}>
+          <button className="btn btn-sm btn-outline ml-auto" onClick={() => setIsFullscreen(!isFullscreen)} style={{padding:'2px 8px', fontWeight: 'bold'}}>
+            {isFullscreen ? '↙️ Contraer' : '↗️ Expandir Mapa'}
+          </button>
+          <label className="flex items-center gap-1 fs-xs" style={{cursor:'pointer'}}>
             <input type="checkbox" checked={showMarkers} onChange={e=>setShowMarkers(e.target.checked)}/> Puntos
           </label>
         </div>
-      )}
+        
+        <div className="flex items-center gap-2 flex-wrap">
+          <select className="btn btn-sm btn-outline" style={{padding:'2px 6px',flex:1}} value={tactical.time} onChange={e => setTactical({...tactical, time: e.target.value})}>
+            <option value="all">Todo histórico</option>
+            <option value="1h">Última 1h</option>
+            <option value="6h">Últimas 6h</option>
+            <option value="24h">Últimas 24h</option>
+          </select>
+
+          <select className="btn btn-sm btn-outline" style={{padding:'2px 6px',flex:1}} value={tactical.severity} onChange={e => setTactical({...tactical, severity: e.target.value})}>
+            <option value="all">Severidad (Todas)</option>
+            <option value="alta">Alta</option>
+            <option value="media">Media</option>
+            <option value="baja">Baja</option>
+          </select>
+
+          <select className="btn btn-sm btn-outline" style={{padding:'2px 6px',flex:1}} value={tactical.status} onChange={e => setTactical({...tactical, status: e.target.value})}>
+            <option value="all">Estado (Todos)</option>
+            <option value="pendiente">Solo Pendientes</option>
+            <option value="en_proceso">En Proceso</option>
+          </select>
+        </div>
+      </div>
       <div className="legend">
         <div className="fw-700 fs-xs">🔴 Intensidad</div>
         <div className="legend-bar"/><div className="legend-labels"><span>Baja</span><span>Alta</span><span>Crítica</span></div>

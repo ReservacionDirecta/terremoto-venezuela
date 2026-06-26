@@ -127,8 +127,9 @@ async function seed() {
   await mongoose.connect(MONGO_URI);
   console.log('✅ MongoDB conectado');
 
-  await Report.deleteMany({});
-  console.log('🧹 Colección limpiada');
+  // Solo limpiar reportes locales, no los externos
+  await Report.deleteMany({ source: { $ne: 'external' } });
+  console.log('🧹 Reportes locales limpiados (externos preservados)');
 
   const inserted = [];
   for (const r of reports) {

@@ -104,15 +104,8 @@ async function nominatimGeocode(query) {
 }
 
 async function geocode(text) {
-  // 1. Intentar lookup local
-  const local = lookupLocation(text);
-  if (local) return local;
-
-  // 2. Nominatim
-  const nom = await nominatimGeocode(text);
-  if (nom) return nom;
-
-  return null;
+  // Solo lookup local — instantáneo, sin llamadas de red
+  return lookupLocation(text) || null;
 }
 
 module.exports = { geocode, lookupLocation };
