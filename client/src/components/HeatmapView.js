@@ -105,30 +105,37 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
       let recencyBoost = 1;
       if (r.reportedAt) {
         const hoursDiff = (now - new Date(r.reportedAt)) / (1000 * 60 * 60);
-        if (hoursDiff <= 1) recencyBoost = 1.5;
-        else if (hoursDiff <= 6) recencyBoost = 1.2;
+        if (hoursDiff <= 1) recencyBoost = 2.0;
+        else if (hoursDiff <= 6) recencyBoost = 1.4;
       }
       let i;
       if (r.tipo === 'sobreviviente') {
-        let sevWeight = r.severity === 'alta' ? 1.5 : r.severity === 'media' ? 0.8 : 0.4;
-        let countWeight = Math.min((r.survivorsCount || 1) / 2, 3);
+        let sevWeight = r.severity === 'alta' ? 2.0 : r.severity === 'media' ? 1.0 : 0.5;
+        let countWeight = Math.min((r.survivorsCount || 1) / 2, 4);
         i = sevWeight * countWeight * recencyBoost;
       }
-      else i = r.encontrado ? 0.2 : 1.0 * recencyBoost;
+      else i = r.encontrado ? 0.1 : 1.2 * recencyBoost;
       return [r.lat, r.lng, i];
     });
 
     if (data.length) {
-      // Heatmap mucho más evidente: radio y blur aumentados
-      heatRef.current = L.heatLayer(data, { radius: 38, blur: 25, max: 1.5,
-        gradient: { 0:'#00c853', 0.2:'#64dd17', 0.4:'#ffd600', 0.6:'#ff6d00', 0.8:'#dd2c00', 1:'#b91c1c' }
+      // Heatmap con gradiente de alta densidad y mayor dispersión
+      heatRef.current = L.heatLayer(data, { 
+        radius: 40, 
+        blur: 28, 
+        max: 1.8,
+        gradient: { 
+          0.1: 'rgba(37, 99, 235, 0.4)',  // Azul para baja densidad
+          0.4: 'rgba(234, 179, 8, 0.7)',  // Amarillo densidad media
+          0.7: 'rgba(249, 115, 22, 0.85)', // Naranja densidad alta
+          1.0: 'rgba(220, 38, 38, 1.0)'    // Rojo crítico
+        }
       }).addTo(map);
       const b = L.latLngBounds(filteredReports.map(r => [r.lat, r.lng]));
       if (b.isValid()) map.fitBounds(b, { padding: [40,40], maxZoom: 13 });
     }
 
     if (showMarkers) {
-      // Clustering manual (aprox 20-30 metros de radio)
       const clusters = [];
       const clusterDist = 0.0003; 
 
@@ -152,22 +159,30 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
         let iconHtml, iconSize, iconAnchor;
         
         if (count === 1) {
-          // Single marker
           const r = cluster.reports[0];
           const isS = r.tipo === 'sobreviviente';
-          const isExt = r.source === 'external';
-          const c = isExt ? '#2563eb' : isS ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
-          const bs = (hasCritical || isRecent) ? '3px solid #fff' : '1.5px solid #fff';
-          const size = (hasCritical || isRecent) ? 18 : 14;
-          iconHtml = `<div style="width:${size}px;height:${size}px;background:${c};border:${bs};border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.4);"></div>`;
-          iconSize = [size, size];
-          iconAnchor = [size/2, size/2];
+          const isM = r.tipo === 'mascota';
+          const c = isM ? '#f97316' : isS ? (r.severity === 'alta' ? '#dc2626' : r.severity === 'media' ? '#ca8a04' : '#2563eb') : r.encontrado ? '#16a34a' : '#2563eb';
+          const size = isS ? 18 : 14;
+          
+          if (isS && r.severity === 'alta') {
+            // Anillo pulsante premium para casos críticos de sobrevivientes atrapados
+            iconHtml = `
+              <div style="position:relative; width:${size}px; height:${size}px;">
+                <div style="position:absolute; inset:-6px; border:2px solid #dc2626; border-radius:50%; animation:ping 1.5s infinite; opacity:0.7;"></div>
+                <div style="width:${size}px; height:${size}px; background:#dc2626; border:2px solid #fff; border-radius:50%; box-shadow:0 2px 8px rgba(220,38,38,0.5);"></div>
+              </div>`;
+          } else {
+            iconHtml = `<div style="width:${size}px;height:${size}px;background:${c};border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`;
+          }
+          iconSize = [size + 12, size + 12];
+          iconAnchor = [(size + 12)/2, (size + 12)/2];
         } else {
-          // Cluster marker
+          // Cluster con contador numérico y bordes premium
           const bg = hasCritical ? '#dc2626' : isRecent ? '#f97316' : '#2563eb';
-          iconHtml = `<div style="width:28px;height:28px;background:${bg};border:3px solid #fff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;box-shadow:0 2px 6px rgba(0,0,0,0.5);">${count}</div>`;
-          iconSize = [28, 28];
-          iconAnchor = [14, 14];
+          iconHtml = `<div style="width:32px;height:32px;background:${bg};border:3px solid #fff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 3px 12px rgba(0,0,0,0.35);">${count}</div>`;
+          iconSize = [32, 32];
+          iconAnchor = [16, 16];
         }
 
         const icon = L.divIcon({ html: iconHtml, iconSize, iconAnchor });
