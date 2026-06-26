@@ -305,13 +305,14 @@ export default function PublicPage() {
 
       <nav className="bottom-nav">
         {[
-          { id: 'inicio', label: 'Mapa' },
-          { id: 'reportar', label: 'Reportar' },
-          { id: 'directorio', label: 'Directorio' },
-          { id: 'guia', label: 'Guía' },
-          { id: 'emergencia', label: '911' },
+          { id: 'inicio',     icon: '🗺️', label: 'Mapa' },
+          { id: 'reportar',   icon: '📝', label: 'Reportar' },
+          { id: 'directorio', icon: '📋', label: 'Directorio' },
+          { id: 'guia',       icon: '📖', label: 'Guía' },
+          { id: 'emergencia', icon: '📞', label: '911' },
         ].map(n => (
           <button key={n.id} className={`nav-item ${tab === n.id ? 'active' : ''}`} onClick={() => setTab(n.id)}>
+            <span style={{fontSize:'1.2rem',lineHeight:1}}>{n.icon}</span>
             <span>{n.label}</span>
           </button>
         ))}
