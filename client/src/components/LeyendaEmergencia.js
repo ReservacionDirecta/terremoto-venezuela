@@ -2,7 +2,7 @@ import React from 'react';
 
 const CONTACTS = [
   {
-    title: '🚑 Emergencia General',
+    title: 'Emergencia General',
     items: [
       { label: 'CANTV', num: '171' },
       { label: 'Movilnet', num: '*1' },
@@ -11,7 +11,7 @@ const CONTACTS = [
     ]
   },
   {
-    title: '✈️ Aeroambulancias',
+    title: 'Aeroambulancias',
     items: [
       { label: 'Principal', num: '(0212) 993.25.41' },
       { label: 'Línea 2', num: '(0212) 992.89.80' },
@@ -20,7 +20,7 @@ const CONTACTS = [
     ]
   },
   {
-    title: '🏥 Rescarven',
+    title: 'Rescarven',
     items: [
       { label: 'Principal', num: '(0212) 993.69.11' },
       { label: 'Línea 2', num: '(0212) 993.69.91' },
@@ -29,7 +29,7 @@ const CONTACTS = [
     ]
   },
   {
-    title: '🚨 Ambulancia Metropolitano',
+    title: 'Ambulancia Metropolitano',
     items: [
       { label: 'Principal', num: '(0212) 545.45.45' },
       { label: 'Línea 2', num: '(0212) 545.46.55' },
@@ -46,7 +46,7 @@ function telLink(num) {
 export default function LeyendaEmergencia() {
   return (
     <div style={{ padding: '16px', maxWidth: 700, margin: '0 auto' }}>
-      <h2 className="fw-700 mb-3" style={{ fontSize: '1.1rem' }}>📞 Contactos de Emergencia — Venezuela</h2>
+      <h2 className="fw-700 mb-3" style={{ fontSize: '1.1rem' }}>Contactos de Emergencia — Venezuela</h2>
       <p className="fs-sm text-gray mb-3">
         Si tienes una emergencia médica, llama a estos números. Esta web es solo para registro de personas.
       </p>

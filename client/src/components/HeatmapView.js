@@ -56,8 +56,24 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
 
     markersRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
+
     return () => { map.remove(); mapRef.current = null; };
   }, []);
+
+  // Cerrar lista al hacer click en cualquier parte del mapa
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    
+    const handleMapClick = () => {
+      setSelectedCluster(null);
+    };
+    
+    map.on('click', handleMapClick);
+    return () => {
+      map.off('click', handleMapClick);
+    };
+  }, [selectedCluster]);
 
   useEffect(() => {
     const map = mapRef.current; if (!map) return;
@@ -157,7 +173,8 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
         const icon = L.divIcon({ html: iconHtml, iconSize, iconAnchor });
         const marker = L.marker([cluster.lat, cluster.lng], { icon }).addTo(markersRef.current);
         
-        marker.on('click', () => {
+        marker.on('click', (e) => {
+          L.DomEvent.stopPropagation(e);
           setSelectedCluster(cluster);
         });
       });
@@ -197,7 +214,7 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
       
       {/* React Modal para el Cluster seleccionado */}
       {selectedCluster && (
-        <div style={{
+        <div onClick={e => e.stopPropagation()} style={{
           position: 'absolute', top: 70, left: 10, zIndex: 2000, 
           background: 'var(--card)', borderRadius: 16, boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
           width: 300, maxHeight: 'calc(100% - 150px)', display: 'flex', flexDirection: 'column',
@@ -243,13 +260,13 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
         display:'flex', flexDirection:'column', gap: 8, alignItems: showChipBar ? 'stretch' : 'flex-end'
       }}>
         {!showChipBar ? (
-          <button className="btn btn-outline" onClick={() => setShowChipBar(true)} style={{ background: 'var(--card)', borderRadius: 20, padding: '8px 12px', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.15)', display: 'flex', gap: 6, alignItems: 'center', fontWeight: 'bold', fontSize: '0.8rem' }}>
+          <button className="btn btn-outline" onClick={() => setShowChipBar(true)} style={{ background: 'var(--card)', borderRadius: 20, padding: '8px 12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.18)', display: 'flex', gap: 6, alignItems: 'center', fontWeight: 'bold', fontSize: '0.8rem', color: 'var(--text)' }}>
             <span>Filtros</span>
           </button>
         ) : (
           <>
             <div style={{ display: 'flex', overflowX: 'auto', gap: 8, paddingBottom: 4, scrollbarWidth: 'none', width: '100%' }} className="chips-container">
-              <button className="btn btn-sm btn-outline" onClick={() => { setShowChipBar(false); setShowFilters(false); }} style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: 'var(--card)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+              <button className="btn btn-sm btn-outline" onClick={() => { setShowChipBar(false); setShowFilters(false); }} style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: 'var(--card)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', color: 'var(--text)' }}>
                 ✕ Cerrar
               </button>
               {filters.map(x => (
@@ -264,37 +281,68 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
               ))}
               <button className="btn btn-sm btn-outline" 
                       onClick={() => setShowFilters(!showFilters)} 
-                      style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: showFilters?'#e2e8f0':'var(--card)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+                      style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: showFilters?'var(--red)':'var(--card)', color: showFilters?'#fff':'var(--text)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
                 Filtros +
               </button>
             </div>
             
             {showFilters && (
-          <div style={{ background: 'var(--card)', padding: 12, borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <label className="flex items-center gap-1 fs-xs" style={{cursor:'pointer', width: '100%', marginBottom: 4, fontWeight: 'bold'}}>
-              <input type="checkbox" checked={showMarkers} onChange={e=>setShowMarkers(e.target.checked)}/> Mostrar puntos individuales
-            </label>
-            <select className="btn btn-sm btn-outline" style={{padding:'4px 8px',flex:1, borderRadius: 8}} value={tactical.time} onChange={e => setTactical({...tactical, time: e.target.value})}>
-              <option value="all">Tiempo: Todo</option>
-              <option value="1h">Última 1h</option>
-              <option value="6h">Últimas 6h</option>
-              <option value="24h">Últimas 24h</option>
-            </select>
+              <div 
+                onClick={e => e.stopPropagation()} 
+                className="filter-modal-sheet"
+                style={{ 
+                  background: 'var(--card)', 
+                  padding: 16, 
+                  borderRadius: 16, 
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.2)', 
+                  display: 'flex', 
+                  gap: 12, 
+                  flexDirection: 'column',
+                  border: '1px solid var(--border)',
+                  marginTop: 4
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>Filtros avanzados</span>
+                  <button onClick={() => setShowFilters(false)} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: '0.85rem', cursor: 'pointer' }}>Listo</button>
+                </div>
+                
+                <label className="flex items-center gap-2 fs-xs" style={{cursor:'pointer', fontWeight: 'bold', color: 'var(--text2)'}}>
+                  <input type="checkbox" checked={showMarkers} onChange={e=>setShowMarkers(e.target.checked)}/> Mostrar marcadores individuales
+                </label>
+                
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 120 }}>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: 4, fontWeight: 700 }}>Rango Temporal</div>
+                    <select className="btn-outline" style={{padding:'8px', borderRadius: 8, fontSize: '0.8rem', width: '100%'}} value={tactical.time} onChange={e => setTactical({...tactical, time: e.target.value})}>
+                      <option value="all">Todo el tiempo</option>
+                      <option value="1h">Última 1 hora</option>
+                      <option value="6h">Últimas 6 horas</option>
+                      <option value="24h">Últimas 24 horas</option>
+                    </select>
+                  </div>
 
-            <select className="btn btn-sm btn-outline" style={{padding:'4px 8px',flex:1, borderRadius: 8}} value={tactical.severity} onChange={e => setTactical({...tactical, severity: e.target.value})}>
-              <option value="all">Gravedad: Todas</option>
-              <option value="alta">Alta</option>
-              <option value="media">Media</option>
-              <option value="baja">Baja</option>
-            </select>
+                  <div style={{ flex: 1, minWidth: 120 }}>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: 4, fontWeight: 700 }}>Gravedad</div>
+                    <select className="btn-outline" style={{padding:'8px', borderRadius: 8, fontSize: '0.8rem', width: '100%'}} value={tactical.severity} onChange={e => setTactical({...tactical, severity: e.target.value})}>
+                      <option value="all">Todas</option>
+                      <option value="alta">Alta</option>
+                      <option value="media">Media</option>
+                      <option value="baja">Baja</option>
+                    </select>
+                  </div>
 
-            <select className="btn btn-sm btn-outline" style={{padding:'4px 8px',flex:1, borderRadius: 8}} value={tactical.status} onChange={e => setTactical({...tactical, status: e.target.value})}>
-              <option value="all">Estado: Todos</option>
-              <option value="pendiente">Pendientes</option>
-              <option value="en_proceso">En Proceso</option>
-            </select>
-          </div>
-        )}
+                  <div style={{ flex: 1, minWidth: 120 }}>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text3)', textTransform: 'uppercase', marginBottom: 4, fontWeight: 700 }}>Estado de búsqueda</div>
+                    <select className="btn-outline" style={{padding:'8px', borderRadius: 8, fontSize: '0.8rem', width: '100%'}} value={tactical.status} onChange={e => setTactical({...tactical, status: e.target.value})}>
+                      <option value="all">Todos</option>
+                      <option value="pendiente">Pendientes</option>
+                      <option value="en_proceso">En Proceso</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
