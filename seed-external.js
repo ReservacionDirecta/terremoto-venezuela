@@ -15,11 +15,9 @@ const MAX_PAGES = parseInt(process.argv[2]) || 15; // 15 páginas = 750 registro
 
 // ─── Anti-spam ──────────────────────────────────
 const SPAM = [
-  /infinityhotel/i, /TRUSTED/i, /\.it\b/i, /https?:\/\//i,
-  /crypto/i, /bitcoin/i, /casino/i, /\.com\b/i, /\.net\b/i,
-  /\.org\b/i, /\.io\b/i, /viagra/i, /cialis/i, /porn/i,
-  /sex\b/i, /free\s*money/i, /earn\s*money/i, /click/i,
-  /subscribe/i, /follow\s*me/i, /onlyfans/i, /telegram\b.*\bjoin/i,
+  /infinityhotel/i, /TRUSTED/i, /SIMONE/i, /BURATTI/i,
+  /\.it\b/i, /https?:\/\//i,
+  /crypto/i, /bitcoin/i, /\.com\b/i, /\.net\b/i, /\.org\b/i,
 ];
 
 function isSpam(p) {
