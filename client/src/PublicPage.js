@@ -8,7 +8,7 @@ import Sobrevivientes from './components/Sobrevivientes';
 import Mascotas from './components/Mascotas';
 import LeyendaEmergencia from './components/LeyendaEmergencia';
 import GuiaUso from './components/GuiaUso';
-import { createReport, fetchReports, fetchCriticalZones } from './api';
+import { createReport, fetchReports, fetchCriticalZones, searchReports, fetchFoto, updateReport } from './api';
 
 export default function PublicPage() {
   const { dark, toggle } = useTheme();

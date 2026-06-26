@@ -53,53 +53,31 @@ export default function AdminPage() {
 
   const tabs = [
     { key: 'mapa', label: 'Mapa' },
-    { key: 'desaparecidos', label: 'Desaparecidos' },
-    { key: 'sobrevivientes', label: 'Atrapados' },
-    { key: 'zonas', label: 'Zonas Críticas' },
-    { key: 'stats', label: 'Estadísticas' },
+    { key: 'listas', label: 'Listas' },
+    { key: 'zonas', label: 'Zonas' },
   ];
 
   return (
     <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       {/* Topbar */}
       <div className="topbar" style={{ flexShrink: 0 }}>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap" style={{minWidth:0,flex:1,overflow:'hidden'}}>
           <Logo size={24} />
           <h1>Hallados</h1>
           {stats && <span className="text-xs hide-mobile" style={{opacity:0.8}}>
             {stats.total.toLocaleString()} reportes · {stats.sobrevivientes}🆘 · {stats.desaparecidos}🔍
           </span>}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="topbar-nav flex items-center gap-1">
           {tabs.map(t => (
             <button key={t.key}
-                    className={`btn btn-sm ${panel === t.key ? 'btn-outline active' : 'btn-outline'}`}
-                    style={panel === t.key ? {borderColor:'#fff',color:'#fff',background:'rgba(255,255,255,0.15)'} : {borderColor:'rgba(255,255,255,0.3)',color:'rgba(255,255,255,0.8)'}}
+                    className={`btn ${panel === t.key ? 'btn-primary' : 'btn-outline'}`}
+                    style={panel === t.key ? {color:'#fff'} : {color:'rgba(255,255,255,0.8)'}}
                     onClick={() => setPanel(t.key)}>
               {t.label}
             </button>
           ))}
-          <button className="theme-toggle" onClick={toggle} title="Tema">{dark ? '☀️' : '🌙'}</button>
-        </div>
-      </div>
-
-      {/* Filtros */}
-      <div className="panel-toolbar" style={{ flexShrink: 0 }}>
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-muted fw-bold" style={{textTransform:'uppercase',letterSpacing:'.05em'}}>Filtrar:</span>
-          {[
-            {k:'all',l:'Todos'},
-            {k:'desaparecido',l:'Desaparecidos'},
-            {k:'sobreviviente',l:'Atrapados'},
-          ].map(f => (
-            <button key={f.k} className={`btn btn-sm ${filter === f.k ? 'btn-outline active' : 'btn-outline'}`}
-                    onClick={() => setFilter(f.k)}>
-              {f.l}
-            </button>
-          ))}
-          <span className="text-xs text-muted" style={{marginLeft:'auto'}}>
-            {filteredReports.length.toLocaleString()} resultados
-          </span>
+          <button className="theme-toggle" onClick={toggle} title="Tema" style={{width:32,height:32,fontSize:'0.85rem',marginLeft:4}}>{dark ? '☀️' : '🌙'}</button>
         </div>
       </div>
 
@@ -121,21 +99,14 @@ export default function AdminPage() {
                              filter={filter} onFilterChange={setFilter} />
               </div>
             )}
-            {panel === 'desaparecidos' && (
-              <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+            {panel === 'listas' && (
+              <div style={{flex:1,overflow:'auto',display:'flex',flexDirection:'column'}}>
                 <Desaparecidos reports={reports.filter(r => r.tipo === 'desaparecido')} onUpdate={loadData} />
-              </div>
-            )}
-            {panel === 'sobrevivientes' && (
-              <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
                 <Sobrevivientes reports={reports.filter(r => r.tipo === 'sobreviviente')} onUpdate={loadData} />
               </div>
             )}
             {panel === 'zonas' && (
-              <div style={{flex:1,overflow:'hidden'}}><CriticalZones zones={zones} /></div>
-            )}
-            {panel === 'stats' && (
-              <div style={{flex:1,overflow:'hidden'}}><StatsPanel stats={stats} zones={zones} /></div>
+              <div style={{flex:1,overflow:'auto'}}><CriticalZones zones={zones} /></div>
             )}
           </>
         )}

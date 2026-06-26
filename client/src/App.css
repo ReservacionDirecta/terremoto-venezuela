@@ -166,10 +166,44 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
   display:flex;align-items:center;justify-content:space-between;
   padding:12px 20px;background:var(--red);color:#fff;
   gap:12px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(220,38,38,.25);
+  max-width:100%;overflow:hidden;
 }
 .topbar h1{font-size:var(--text-md);color:#fff;font-weight:var(--weight-bold)}
 .topbar .btn{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.9);background:transparent}
 .topbar .btn:hover{background:rgba(255,255,255,.12);color:#fff}
+@media(max-width:640px){
+  .topbar{padding:10px 12px;gap:8px}
+  .topbar h1{font-size:var(--text-base);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
+  .topbar .hide-mobile{display:none!important}
+}
+
+/* Admin topbar tabs - responsive */
+.topbar-nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.topbar-nav::-webkit-scrollbar { display: none; }
+.topbar-nav .btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding: 6px 12px;
+  font-size: var(--text-xs);
+  min-height: 32px;
+  border-radius: var(--radius-sm);
+}
+@media (max-width: 480px) {
+  .topbar-nav .btn {
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    min-height: 28px;
+  }
+}
+
 
 /* ─── Panel toolbar ──────────────────────────── */
 .panel-toolbar{
@@ -182,7 +216,11 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 .bottom-nav{
   display:flex;background:var(--surface);border-top:1px solid var(--border);
   padding:6px 8px;gap:2px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;-ms-overflow-style:none;
+  flex-shrink:0;
 }
+.bottom-nav::-webkit-scrollbar{display:none}
 .nav-item{
   flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:3px;padding:8px 4px;border:none;background:transparent;
@@ -193,6 +231,11 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 .nav-item:hover{color:var(--text-2);background:rgba(0,0,0,.03)}
 .nav-item.active{color:var(--red);font-weight:var(--weight-semibold)}
 .nav-item.active span:first-child{transform:scale(1.1)}
+@media(max-width:380px){
+  .bottom-nav{padding:4px 6px}
+  .nav-item{padding:6px 2px;min-height:48px;font-size:0.65rem}
+  .nav-item span:first-child{font-size:1rem}
+}
 
 /* ─── Hero público ───────────────────────────── */
 .hero-public{
@@ -233,7 +276,7 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
 
 /* ─── Map ────────────────────────────────────── */
 .map-wrap{position:relative;flex:1;display:flex;flex-direction:column;min-height:0}
-#map-container{flex:1;position:relative}
+#map-container{flex:1;position:relative;z-index:1}
 .map-controls{
   position:absolute;top:12px;right:12px;z-index:150;
   background:var(--surface);padding:12px 14px;border-radius:var(--radius);
@@ -241,12 +284,28 @@ select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%
   min-width:180px;
 }
 
+/* ─── Split Home (map + search layout) ───────── */
+.split-home{
+  position:relative;flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;
+}
+.map-half{
+  position:relative;flex:1;min-height:0;
+}
+.floating-search-bar{
+  position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  z-index:600;width:calc(100% - 90px);max-width:440px;
+}
+@media(max-width:640px){
+  .floating-search-bar{width:calc(100% - 24px);top:10px}
+}
+
 /* ─── Legend ─────────────────────────────────── */
 .legend{
   position:absolute;bottom:72px;left:12px;z-index:150;
-  background:var(--surface);padding:8px 12px;border-radius:var(--radius-sm);
-  border:1px solid var(--border);box-shadow:var(--shadow-sm);
-  font-size:var(--text-xs);
+  background:rgba(15,23,42,0.85);backdrop-filter:blur(12px);
+  padding:8px 12px;border-radius:var(--radius-sm);
+  border:1px solid rgba(255,255,255,0.1);box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  font-size:var(--text-xs);color:rgba(255,255,255,0.9);
 }
 .legend-bar{width:120px;height:6px;border-radius:3px;background:linear-gradient(to right,#00c853,#ffd600,#ff6d00,#d50000);margin:3px 0}
 .legend-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:.6rem}

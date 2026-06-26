@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
+
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl:'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
@@ -15,8 +17,44 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
   const mapRef = useRef(null);
   const heatRef = useRef(null);
   const markersRef = useRef(null);
+  const containerRef = useRef(null);
   const [selectedCluster, setSelectedCluster] = useState(null);
   const [showMarkers, setShowMarkers] = useState(true);
+
+  // Initialize Leaflet map
+  useEffect(() => {
+    if (mapRef.current) return; // already initialized
+
+    const map = L.map('map-container', {
+      center: EPI,
+      zoom: 8,
+      zoomControl: true,
+      attributionControl: false,
+    });
+
+    // Dark-themed tiles for premium look
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 19,
+      subdomains: 'abcd',
+    }).addTo(map);
+
+    // Attribution in bottom-right (minimal)
+    L.control.attribution({ position: 'bottomright', prefix: false })
+      .addAttribution('© <a href="https://carto.com/">CARTO</a> · © <a href="https://www.openstreetmap.org/copyright">OSM</a>')
+      .addTo(map);
+
+    mapRef.current = map;
+    markersRef.current = L.layerGroup().addTo(map);
+
+    // Ensure map renders correctly after DOM paint
+    setTimeout(() => map.invalidateSize(), 200);
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      markersRef.current = null;
+    };
+  }, []);
 
   // Cerrar cluster al click en mapa
   useEffect(() => {
@@ -38,14 +76,15 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
 
   // Heatmap + markers
   useEffect(() => {
-    const map = mapRef.current; if (!map) return;
+    const map = mapRef.current;
+    if (!map) return;
     if (heatRef.current) { map.removeLayer(heatRef.current); heatRef.current = null; }
-    markersRef.current?.clearLayers();
+    if (markersRef.current) markersRef.current.clearLayers();
 
     const now = Date.now();
     const filtered = reports.filter(r => {
       if (filter !== 'all' && r.tipo !== filter) return false;
-      return true;
+      return r.lat != null && r.lng != null;
     });
 
     const data = filtered.filter(r => r.tipo !== 'mascota').map(r => {
@@ -74,7 +113,7 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
       if (b.isValid()) map.fitBounds(b, { padding: [40,40], maxZoom: 14 });
     }
 
-    if (showMarkers) {
+    if (showMarkers && markersRef.current) {
       // Clustering simple
       const clusters = {};
       filtered.forEach(r => {
@@ -93,15 +132,15 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
           const r = cluster.reports[0];
           const c = r.source === 'external' ? '#2563eb' : r.tipo === 'sobreviviente' ? sevColors[r.severity] : r.encontrado ? '#16a34a' : '#2563eb';
           const size = r.tipo === 'sobreviviente' ? 14 : 12;
-          iconHtml = `<div style="width:${size}px;height:${size}px;background:${c};border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`;
+          iconHtml = `<div style="width:${size}px;height:${size}px;background:${c};border:2px solid rgba(255,255,255,0.9);border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.4);"></div>`;
           iconSize = [size+8, size+8]; iconAnchor = [(size+8)/2, (size+8)/2];
         } else {
           const bg = cluster.hasCritical ? '#dc2626' : '#2563eb';
-          iconHtml = `<div style="width:32px;height:32px;background:${bg};border:3px solid #fff;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 3px 12px rgba(0,0,0,0.35);">${cluster.count}</div>`;
-          iconSize = [32, 32]; iconAnchor = [16, 16];
+          iconHtml = `<div style="width:34px;height:34px;background:${bg};border:2.5px solid rgba(255,255,255,0.9);border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;box-shadow:0 3px 12px rgba(0,0,0,0.4);font-family:system-ui;">${cluster.count}</div>`;
+          iconSize = [34, 34]; iconAnchor = [17, 17];
         }
 
-        const icon = L.divIcon({ html: iconHtml, iconSize, iconAnchor });
+        const icon = L.divIcon({ html: iconHtml, iconSize, iconAnchor, className: '' });
         const marker = L.marker([cluster.lat, cluster.lng], { icon }).addTo(markersRef.current);
         marker.on('click', (e) => { L.DomEvent.stopPropagation(e); setSelectedCluster(cluster); });
       });
@@ -123,20 +162,23 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
     });
   }, [criticalZones]);
 
+  // Invalidate size on visibility changes (tab switch)
   useEffect(() => {
-    if (mapRef.current) setTimeout(() => mapRef.current.invalidateSize(), 300);
+    if (mapRef.current) {
+      setTimeout(() => mapRef.current?.invalidateSize(), 300);
+    }
   }, []);
 
   return (
-    <div className="map-wrap">
+    <div className="map-wrap" ref={containerRef}>
       <div id="map-container" style={{position:'absolute',top:0,left:0,right:0,bottom:0}}/>
 
-      {/* Filtro inline — solo uno, sincronizado con AdminPage */}
-      <div style={{position:'absolute',top:10,right:10,zIndex:500,background:'rgba(255,255,255,0.95)',padding:'8px 12px',borderRadius:10,border:'1px solid #e2e8f0',display:'flex',gap:6,flexWrap:'wrap',alignItems:'center',boxShadow:'0 2px 8px rgba(0,0,0,0.1)'}}>
-        <span className="text-xs text-muted fw-bold">FILTRO:</span>
+      {/* Filtro inline */}
+      <div style={{position:'absolute',top:10,right:10,zIndex:500,background:'rgba(15,23,42,0.85)',backdropFilter:'blur(12px)',padding:'8px 12px',borderRadius:10,border:'1px solid rgba(255,255,255,0.1)',display:'flex',gap:6,flexWrap:'wrap',alignItems:'center',boxShadow:'0 4px 16px rgba(0,0,0,0.3)'}}>
+        <span style={{fontSize:'0.72rem',color:'rgba(255,255,255,0.6)',fontWeight:700}}>FILTRO:</span>
         {[{k:'all',l:'Todos'},{k:'desaparecido',l:'Desap.'},{k:'sobreviviente',l:'Atrap.'}].map(x => (
           <button key={x.k} className={`btn btn-sm ${filter===x.k?'btn-primary':'btn-outline'}`}
-                  style={filter===x.k?{}:{fontSize:'0.72rem',padding:'4px 10px',minHeight:28}}
+                  style={filter===x.k?{fontSize:'0.72rem',padding:'4px 10px',minHeight:28}:{fontSize:'0.72rem',padding:'4px 10px',minHeight:28,background:'transparent',color:'rgba(255,255,255,0.7)',borderColor:'rgba(255,255,255,0.15)'}}
                   onClick={() => onFilterChange && onFilterChange(x.k)}>
             {x.l}
           </button>
@@ -147,13 +189,13 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
       {selectedCluster && (
         <div style={{
           position:'absolute', top:60, left:10, zIndex:1000,
-          background:'#fff', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,0.2)',
+          background:'var(--surface)', borderRadius:12, boxShadow:'0 8px 32px rgba(0,0,0,0.3)',
           width:280, maxHeight:'calc(100% - 140px)', display:'flex', flexDirection:'column',
-          border:'1px solid #e2e8f0', overflow:'hidden'
+          border:'1px solid var(--border)', overflow:'hidden'
         }} onClick={e => e.stopPropagation()}>
-          <div style={{padding:'12px 14px',borderBottom:'1px solid #e5e7eb',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div style={{padding:'12px 14px',borderBottom:'1px solid var(--border)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <h3 style={{margin:0,fontSize:'1rem',fontWeight:700}}>📍 {selectedCluster.reports.length} {selectedCluster.reports.length===1?'reporte':'reportes'}</h3>
-            <button onClick={() => setSelectedCluster(null)} style={{background:'none',border:'none',fontSize:'1.1rem',cursor:'pointer',padding:4,color:'#9ca3af'}}>✕</button>
+            <button onClick={() => setSelectedCluster(null)} style={{background:'none',border:'none',fontSize:'1.1rem',cursor:'pointer',padding:4,color:'var(--muted)'}}>✕</button>
           </div>
           <div style={{padding:'10px 14px',overflowY:'auto',flex:1}}>
             {selectedCluster.reports.map(r => {
@@ -162,11 +204,11 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
               const title = isS ? `Sobreviviente ${r.severity}` : r.encontrado ? 'Localizado' : 'Desaparecido';
               return (
                 <div key={r._id} onClick={() => { if (onReportClick) onReportClick(r); setSelectedCluster(null); }}
-                     style={{marginBottom:10,borderLeft:`3px solid ${c}`,paddingLeft:10,cursor:'pointer',paddingBottom:10,borderBottom:'1px solid #f3f4f6'}}>
+                     style={{marginBottom:10,borderLeft:`3px solid ${c}`,paddingLeft:10,cursor:'pointer',paddingBottom:10,borderBottom:'1px solid var(--border)'}}>
                   <b style={{color:c,fontSize:'0.78rem',textTransform:'uppercase'}}>{title}</b>
                   {r.nombre && <p style={{margin:'3px 0',fontSize:'0.85rem',fontWeight:600}}>{r.nombre}</p>}
-                  {isS && r.survivorsCount && <p className="text-xs text-muted">👥 {r.survivorsCount} persona(s)</p>}
-                  <p className="text-xs text-muted">📍 {r.ultimaUbicacion||`${r.lat.toFixed(3)}, ${r.lng.toFixed(3)}`}</p>
+                  {isS && r.survivorsCount && <p style={{fontSize:'0.72rem',color:'var(--muted)'}}>👥 {r.survivorsCount} persona(s)</p>}
+                  <p style={{fontSize:'0.72rem',color:'var(--muted)'}}>📍 {r.ultimaUbicacion||`${r.lat.toFixed(3)}, ${r.lng.toFixed(3)}`}</p>
                 </div>
               );
             })}
@@ -176,13 +218,13 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
 
       {/* Legend */}
       <div className="legend">
-        <div className="fw-bold text-xs">Intensidad</div>
+        <div style={{fontWeight:700,fontSize:'0.72rem'}}>Intensidad</div>
         <div className="legend-bar"/>
         <div className="legend-labels"><span>Baja</span><span>Alta</span></div>
       </div>
 
       {/* Contador */}
-      <div style={{position:'absolute',bottom:20,left:10,zIndex:500,background:'rgba(255,255,255,0.95)',padding:'6px 12px',borderRadius:8,border:'1px solid #e2e8f0',fontSize:'0.78rem'}}>
+      <div style={{position:'absolute',bottom:20,left:10,zIndex:500,background:'rgba(15,23,42,0.85)',backdropFilter:'blur(12px)',padding:'6px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,0.1)',fontSize:'0.78rem',color:'rgba(255,255,255,0.9)'}}>
         📍 <b>{reports.length.toLocaleString()}</b> · 🎯 <b>{criticalZones.length}</b> zonas
       </div>
     </div>
