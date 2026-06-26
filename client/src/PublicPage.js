@@ -27,6 +27,7 @@ export default function PublicPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [showPanel, setShowPanel] = useState(true);
 
   const loadPublicData = useCallback(async () => {
     setLoading(true);
@@ -156,69 +157,90 @@ export default function PublicPage() {
                 <HeatmapView reports={reports} criticalZones={zones} filter="all" onFilterChange={() => {}} onReportClick={setSelectedReport} selectedReport={selectedReport} compact />
               )}
             </div>
-            <div className="list-half">
-              {/* Added a small handle for the bottom sheet look */}
-              <div style={{ width: 40, height: 4, background: '#cbd5e1', borderRadius: 2, margin: '0 auto 12px auto' }}></div>
 
-              {searchQuery.trim() ? (
-                <>
-                  <h3 className="fs-sm fw-700 text-gray mb-2">Resultados de Búsqueda {isSearching && <span className="spinner" style={{width:12,height:12,marginLeft:6,borderWidth:2,display:'inline-block'}}/>}</h3>
-                  {searchResults && searchResults.length === 0 ? (
-                    <p className="fs-xs text-muted">No se encontraron resultados.</p>
-                  ) : (
-                    (searchResults || []).map(r => (
-                      <div key={r._id} className="recent-card" 
-                           onClick={() => setSelectedReport(r)}
-                           style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`, cursor: 'pointer' }}>
-                        <div style={{ flex: 1 }}>
-                          <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
-                          <div className="fs-xs text-gray mt-1">
-                            {r.identificacion && <span style={{display:'block',color:'#666'}}>CI/DNI: {r.identificacion}</span>}
-                            {r.ultimaUbicacion || 'Ubicación marcada'}
+            {/* Bottom sheet toggle + panel */}
+            {showPanel ? (
+              <div className="list-half">
+                {/* Handle bar + close */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 8, position: 'relative' }}>
+                  <div style={{ width: 36, height: 4, background: '#cbd5e1', borderRadius: 2 }}></div>
+                  <button onClick={() => setShowPanel(false)} style={{ position: 'absolute', right: 0, top: -2, background: 'none', border: 'none', fontSize: '0.75rem', color: 'var(--muted)', cursor: 'pointer', padding: '2px 6px' }}>▼ Ocultar</button>
+                </div>
+
+                {searchQuery.trim() ? (
+                  <>
+                    <h3 className="fs-sm fw-700 text-gray mb-2">Resultados de Búsqueda {isSearching && <span className="spinner" style={{width:12,height:12,marginLeft:6,borderWidth:2,display:'inline-block'}}/>}</h3>
+                    {searchResults && searchResults.length === 0 ? (
+                      <p className="fs-xs text-muted">No se encontraron resultados.</p>
+                    ) : (
+                      (searchResults || []).map(r => (
+                        <div key={r._id} className="recent-card" 
+                             onClick={() => setSelectedReport(r)}
+                             style={{ borderLeft: `4px solid ${r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)'}`, cursor: 'pointer' }}>
+                          <div style={{ flex: 1 }}>
+                            <div className="fw-700 fs-sm">{r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Sobrevivientes atrapados'}</div>
+                            <div className="fs-xs text-gray mt-1">
+                              {r.identificacion && <span style={{display:'block',color:'#666'}}>CI/DNI: {r.identificacion}</span>}
+                              {r.ultimaUbicacion || 'Ubicación marcada'}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))
-                  )}
-                </>
-              ) : (
-                <>
-                  <h3 className="fs-sm fw-700 text-gray mb-2">Últimos reportes</h3>
-                  {recentReports.length === 0 ? (
-                    <p className="fs-xs text-muted">No hay reportes recientes.</p>
-                  ) : (
-                     recentReports.map(r => {
-                      const timeAgo = r.reportedAt ? (() => {
-                        const mins = Math.round((new Date() - new Date(r.reportedAt)) / 60000);
-                        if (mins < 60) return `hace ${mins}m`;
-                        const hrs = Math.round(mins / 60);
-                        if (hrs < 24) return `hace ${hrs}h`;
-                        return `hace ${Math.round(hrs / 24)}d`;
-                      })() : '';
-                      const typeColor = r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)';
-                      return (
-                      <div key={r._id} className="recent-card" 
-                           onClick={() => setSelectedReport(r)}
-                           style={{ borderLeft: `4px solid ${typeColor}`, cursor: 'pointer' }}>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <span className="fw-700" style={{ fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Atrapados'}
-                            </span>
-                            {r.encontrado && <span style={{ background: '#dcfce7', color: '#166534', padding: '1px 6px', borderRadius: 8, fontSize: '0.6rem', fontWeight: 700, flexShrink: 0 }}>Encontrado</span>}
+                      ))
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <h3 className="fs-sm fw-700 text-gray mb-2">Últimos reportes</h3>
+                    {recentReports.length === 0 ? (
+                      <p className="fs-xs text-muted">No hay reportes recientes.</p>
+                    ) : (
+                       recentReports.map(r => {
+                        const timeAgo = r.reportedAt ? (() => {
+                          const mins = Math.round((new Date() - new Date(r.reportedAt)) / 60000);
+                          if (mins < 60) return `hace ${mins}m`;
+                          const hrs = Math.round(mins / 60);
+                          if (hrs < 24) return `hace ${hrs}h`;
+                          return `hace ${Math.round(hrs / 24)}d`;
+                        })() : '';
+                        const typeColor = r.tipo === 'desaparecido' ? 'var(--blue)' : r.tipo === 'mascota' ? 'var(--yellow)' : 'var(--red)';
+                        return (
+                        <div key={r._id} className="recent-card" 
+                             onClick={() => setSelectedReport(r)}
+                             style={{ borderLeft: `4px solid ${typeColor}`, cursor: 'pointer' }}>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span className="fw-700" style={{ fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {r.tipo === 'desaparecido' ? (r.nombre || 'Desaparecido') : r.tipo === 'mascota' ? (r.nombre || 'Mascota') : 'Atrapados'}
+                              </span>
+                              {r.encontrado && <span style={{ background: '#dcfce7', color: '#166534', padding: '1px 6px', borderRadius: 8, fontSize: '0.6rem', fontWeight: 700, flexShrink: 0 }}>Encontrado</span>}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {r.ultimaUbicacion || 'Ubicación marcada'}
+                            </div>
                           </div>
-                          <div style={{ fontSize: '0.72rem', color: 'var(--text3)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {r.ultimaUbicacion || 'Ubicación marcada'}
-                          </div>
+                          {timeAgo && <span style={{ fontSize: '0.65rem', color: 'var(--muted)', flexShrink: 0 }}>{timeAgo}</span>}
                         </div>
-                        {timeAgo && <span style={{ fontSize: '0.65rem', color: 'var(--muted)', flexShrink: 0 }}>{timeAgo}</span>}
-                      </div>
-                    );}
-                    ))
-                  )}
-                </>
-              )}
-            </div>
+                      );}
+                      ))
+                    )}
+                  </>
+                )}
+              </div>
+            ) : (
+              /* Floating button to bring the panel back */
+              <button 
+                onClick={() => setShowPanel(true)}
+                style={{
+                  position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)',
+                  zIndex: 200, background: 'var(--card)', border: 'none',
+                  borderRadius: 24, padding: '8px 20px',
+                  boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+                  cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700,
+                  color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 6
+                }}>
+                ▲ Reportes ({reports.length})
+              </button>
+            )}
           </div>
         )}
 
