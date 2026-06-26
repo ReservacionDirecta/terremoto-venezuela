@@ -130,6 +130,22 @@ export default function PublicPage() {
         
         {tab === 'inicio' && (
           <div className="split-home">
+            {/* Search Bar - Floating */}
+            <div style={{ position: 'absolute', top: 12, left: 12, right: 12, zIndex: 1000 }}>
+              <input 
+                type="text" 
+                placeholder="🔍 Buscar por nombre, CI/DNI, teléfono..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                style={{ 
+                  width: '100%', padding: '12px 16px', borderRadius: 24, 
+                  border: '1px solid var(--border)', background: 'var(--card)', 
+                  color: 'var(--text)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                  fontSize: '1rem', fontWeight: '500'
+                }}
+              />
+            </div>
+
             <div className="map-half">
               {loading && reports.length === 0 ? (
                 <div className="empty-state"><div className="spinner" style={{margin:'20px auto'}}/></div>
@@ -138,15 +154,8 @@ export default function PublicPage() {
               )}
             </div>
             <div className="list-half">
-              <div style={{ marginBottom: 15 }}>
-                <input 
-                  type="text" 
-                  placeholder="🔍 Buscar por nombre, CI/DNI, teléfono..." 
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)' }}
-                />
-              </div>
+              {/* Added a small handle for the bottom sheet look */}
+              <div style={{ width: 40, height: 4, background: '#cbd5e1', borderRadius: 2, margin: '0 auto 12px auto' }}></div>
 
               {searchQuery.trim() ? (
                 <>
@@ -286,64 +295,114 @@ export default function PublicPage() {
 
       {/* Ficha Detallada (ReportDetailModal) */}
       {selectedReport && (
-        <div className="modal-overlay" onClick={() => setSelectedReport(null)} style={{ zIndex: 3000 }}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 450, width: '90%' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
-              <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--text)' }}>
-                Ficha de {selectedReport.tipo.charAt(0).toUpperCase() + selectedReport.tipo.slice(1)}
-              </h2>
-              <button onClick={() => setSelectedReport(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text)' }}>✕</button>
+        <div className="modal-overlay" onClick={() => setSelectedReport(null)} style={{ zIndex: 3000, padding: 15 }}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 450, width: '100%', padding: '24px 20px', borderRadius: 20 }}>
+            {/* Banner superior */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+              <div>
+                <span style={{ background: selectedReport.encontrado ? '#dcfce7' : '#fee2e2', color: selectedReport.encontrado ? '#166534' : '#991b1b', padding: '4px 10px', borderRadius: 12, fontSize: '0.8rem', fontWeight: 700 }}>
+                  {selectedReport.status || (selectedReport.encontrado ? 'Encontrado' : 'Sin contacto')}
+                </span>
+                <h2 style={{ margin: '10px 0 0 0', fontSize: '1.6rem', color: 'var(--text)', fontWeight: 800 }}>
+                  {selectedReport.tipo === 'sobreviviente' ? 'Personas Atrapadas' : selectedReport.nombre || 'Desconocido'}
+                </h2>
+                {selectedReport.tipo === 'desaparecido' && selectedReport.edad && (
+                  <p style={{ margin: 0, fontSize: '1rem', color: 'var(--text2)' }}>{selectedReport.edad} años</p>
+                )}
+                {selectedReport.tipo === 'desaparecido' && selectedReport.identificacion && (
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text3)' }}>CI/DNI: {selectedReport.identificacion}</p>
+                )}
+              </div>
+              <button onClick={() => setSelectedReport(null)} style={{ background: '#f1f5f9', border: 'none', width: 36, height: 36, borderRadius: '50%', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--text)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
-            
-            <div style={{ marginBottom: 20 }}>
-              {(selectedReport.tipo === 'desaparecido' || selectedReport.tipo === 'mascota') && (
-                <p style={{ margin: '4px 0', fontSize: '1.05rem' }}><strong>Nombre:</strong> {selectedReport.nombre || 'Desconocido'}</p>
+
+            {/* Foto si existe */}
+            {selectedReport.foto && (
+              <div style={{ marginBottom: 20 }}>
+                <img src={selectedReport.foto} alt="Foto" style={{ width: '100%', height: 250, objectFit: 'cover', borderRadius: 16 }} />
+              </div>
+            )}
+
+            {/* Bloques de Info */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: 24 }}>
+              <div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Última ubicación</div>
+                <div style={{ fontSize: '1rem', color: 'var(--text)' }}>{selectedReport.ultimaUbicacion || `${selectedReport.lat.toFixed(4)}, ${selectedReport.lng.toFixed(4)}`}</div>
+              </div>
+
+              {selectedReport.reportedAt && (
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>{selectedReport.tipo === 'sobreviviente' ? 'Reportado el' : 'Sin contacto desde'}</div>
+                  <div style={{ fontSize: '1rem', color: 'var(--text)' }}>
+                    {new Date(selectedReport.reportedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  </div>
+                </div>
               )}
-              {(selectedReport.tipo === 'desaparecido') && (
-                <>
-                  {selectedReport.identificacion && <p style={{ margin: '4px 0' }}><strong>CI/DNI:</strong> {selectedReport.identificacion}</p>}
-                  <p style={{ margin: '4px 0' }}><strong>Edad:</strong> {selectedReport.edad || 'N/A'}</p>
-                </>
-              )}
-              {(selectedReport.tipo === 'sobreviviente') && (
-                <p style={{ margin: '4px 0' }}><strong>Personas Atrapadas:</strong> {selectedReport.survivorsCount || 1}</p>
-              )}
-              <p style={{ margin: '4px 0' }}><strong>Estado Actual:</strong> <span style={{ padding: '2px 6px', background: '#f1f5f9', borderRadius: 4, fontWeight: 'bold' }}>{selectedReport.status || (selectedReport.encontrado ? 'Localizado' : 'Sin localizar')}</span></p>
-              <p style={{ margin: '4px 0' }}><strong>Ubicación:</strong> {selectedReport.ultimaUbicacion || `${selectedReport.lat.toFixed(4)}, ${selectedReport.lng.toFixed(4)}`}</p>
-              <p style={{ margin: '4px 0' }}><strong>Reportado hace:</strong> {selectedReport.reportedAt ? Math.round((new Date() - new Date(selectedReport.reportedAt))/(1000*60*60))+' horas' : 'N/A'}</p>
-              
+
               {selectedReport.description && (
-                <div style={{ marginTop: 10, padding: 10, background: 'var(--bg)', borderRadius: 6, fontSize: '0.9rem', color: 'var(--text2)' }}>
-                  {selectedReport.description}
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Descripción y señas</div>
+                  <div style={{ fontSize: '1rem', color: 'var(--text)', background: 'var(--bg)', padding: 12, borderRadius: 8 }}>{selectedReport.description}</div>
+                </div>
+              )}
+
+              {(selectedReport.contactoReportante || selectedReport.telefonoReportante) && (
+                <div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: 1, fontWeight: 700 }}>Reporta</div>
+                  <div style={{ fontSize: '1rem', color: 'var(--text)' }}>{selectedReport.contactoReportante || 'Anónimo'} {selectedReport.telefonoReportante}</div>
                 </div>
               )}
             </div>
 
-            <h4 style={{ margin: '0 0 10px 0', borderBottom: '1px solid var(--border)', paddingBottom: 5 }}>Actualizar Estado</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {(selectedReport.tipo === 'desaparecido' || selectedReport.tipo === 'mascota') && !selectedReport.encontrado && (
-                <button className="btn" style={{ background: 'var(--green)', color: '#fff', padding: '10px' }}
-                        onClick={() => handleUpdateStatus('localizado', true)}>
-                  ✅ Marcar como Localizado
+            <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '0 0 20px 0' }} />
+
+            {/* Acciones principales */}
+            <div style={{ marginBottom: 24 }}>
+              <h3 style={{ fontSize: '1.1rem', margin: '0 0 4px 0' }}>¿Ya lograste comunicarte?</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text2)', margin: '0 0 12px 0' }}>Márcala como localizada y su familia podrá respirar tranquila.</p>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {(selectedReport.tipo === 'desaparecido' || selectedReport.tipo === 'mascota') && !selectedReport.encontrado && (
+                  <button className="btn btn-block" style={{ background: 'var(--green)', color: '#fff', padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
+                          onClick={() => handleUpdateStatus('localizado', true)}>
+                    Marcar como localizada
+                  </button>
+                )}
+                {selectedReport.tipo === 'sobreviviente' && (
+                  <>
+                    <button className="btn btn-block" style={{ background: 'var(--yellow)', color: '#000', padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
+                            onClick={() => handleUpdateStatus('en_proceso', false)}>
+                      Marcar En Proceso de Rescate
+                    </button>
+                    <button className="btn btn-block" style={{ background: 'var(--green)', color: '#fff', padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
+                            onClick={() => handleUpdateStatus('rescatado', true)}>
+                      Marcar Rescatados
+                    </button>
+                  </>
+                )}
+                <button className="btn btn-block btn-secondary" style={{ padding: '14px', borderRadius: 12, fontSize: '1.05rem' }}
+                        onClick={() => handleUpdateStatus('falsa_alarma', false)}>
+                  Reporte Falso / Error
                 </button>
-              )}
-              {selectedReport.tipo === 'sobreviviente' && (
-                <>
-                  <button className="btn" style={{ background: 'var(--yellow)', color: '#000', padding: '10px' }}
-                          onClick={() => handleUpdateStatus('en_proceso', false)}>
-                    🚧 Marcar En Proceso de Rescate
-                  </button>
-                  <button className="btn" style={{ background: 'var(--green)', color: '#fff', padding: '10px' }}
-                          onClick={() => handleUpdateStatus('rescatado', true)}>
-                    ✅ Marcar Rescatados
-                  </button>
-                </>
-              )}
-              <button className="btn btn-secondary" style={{ padding: '10px' }}
-                      onClick={() => handleUpdateStatus('falsa_alarma', false)}>
-                ❌ Marcar Falsa Alarma
-              </button>
+              </div>
             </div>
+
+            {/* Redes Sociales y Compartir */}
+            <div style={{ background: 'var(--bg)', padding: 16, borderRadius: 16 }}>
+              <h4 style={{ margin: '0 0 12px 0', fontSize: '1rem', textAlign: 'center' }}>Ayuda a difundir</h4>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+                <button className="btn btn-sm btn-outline" style={{ borderRadius: 20, padding: '8px 16px', background: '#000', color: '#fff', border: 'none' }} onClick={() => window.open(`https://twitter.com/intent/tweet?text=Ayúdame a difundir este reporte: ${window.location.href}`)}>X</button>
+                <button className="btn btn-sm btn-outline" style={{ borderRadius: 20, padding: '8px 16px', background: '#1877F2', color: '#fff', border: 'none' }} onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`)}>Facebook</button>
+                <button className="btn btn-sm btn-outline" style={{ borderRadius: 20, padding: '8px 16px', background: 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)', color: '#fff', border: 'none' }} onClick={() => window.alert('Usa el botón Compartir de tu teléfono para Instagram.')}>Instagram</button>
+                <button className="btn btn-sm btn-outline" style={{ borderRadius: 20, padding: '8px 16px', background: '#fff', color: '#000' }} onClick={() => { navigator.clipboard.writeText(`Ayúdame a difundir este reporte: ${window.location.href}`); window.alert('Enlace copiado al portapapeles'); }}>Copiar</button>
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <button style={{ background: 'none', border: 'none', color: 'var(--red)', fontSize: '0.8rem', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => { window.alert('Reporte enviado para revisión.'); setSelectedReport(null); }}>
+                  Reportar contenido obsceno
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}

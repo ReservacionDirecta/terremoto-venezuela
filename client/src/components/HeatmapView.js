@@ -25,6 +25,7 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
   });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedCluster, setSelectedCluster] = useState(null);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     if (selectedReport && mapRef.current) {
@@ -233,59 +234,61 @@ export default function HeatmapView({ reports, criticalZones, filter, onFilterCh
         </div>
       )}
 
-      {/* Panel de Filtros Tácticos Flotante */}
+      {/* Panel de Filtros Tácticos Flotante (Chips) */}
       <div style={{
-        position:'absolute', top:10, right:10, zIndex:1000,
-        background:'rgba(255,255,255,0.95)', padding:'8px 12px',
-        borderRadius:'8px', boxShadow:'0 2px 8px rgba(0,0,0,0.2)',
-        display:'flex', flexDirection:'column', gap:8, maxWidth:'calc(100vw - 60px)'
+        position:'absolute', top: 70, left: 10, right: 10, zIndex: 900,
+        display:'flex', flexDirection:'column', gap: 8
       }}>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div style={{ display: 'flex', overflowX: 'auto', gap: 8, paddingBottom: 4, scrollbarWidth: 'none' }} className="chips-container">
           {filters.map(x => (
             <button key={x.k}
-                    className={`btn btn-sm ${tactical.tipo===x.k?'btn-outline active':'btn-outline'}`}
+                    className={`btn btn-sm ${tactical.tipo===x.k?'btn-primary':'btn-outline'}`}
                     onClick={() => {
                       setTactical({...tactical, tipo: x.k});
                       if (onFilterChange) onFilterChange(x.k);
-                    }} style={{padding:'2px 8px'}}>
+                    }} style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: tactical.tipo===x.k?'var(--red)':'var(--card)', color: tactical.tipo===x.k?'#fff':'var(--text)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
               {x.l}
             </button>
           ))}
-          <button className="btn btn-sm btn-outline ml-auto" onClick={() => setIsFullscreen(!isFullscreen)} style={{padding:'2px 8px', fontWeight: 'bold'}}>
-            {isFullscreen ? '↙️ Contraer' : '↗️ Expandir Mapa'}
+          <button className="btn btn-sm btn-outline" 
+                  onClick={() => setShowFilters(!showFilters)} 
+                  style={{ whiteSpace: 'nowrap', borderRadius: 20, padding: '6px 12px', background: showFilters?'#e2e8f0':'var(--card)', border: 'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}>
+            ⚙️ Filtros
           </button>
-          <label className="flex items-center gap-1 fs-xs" style={{cursor:'pointer'}}>
-            <input type="checkbox" checked={showMarkers} onChange={e=>setShowMarkers(e.target.checked)}/> Puntos
-          </label>
         </div>
         
-        <div className="flex items-center gap-2 flex-wrap">
-          <select className="btn btn-sm btn-outline" style={{padding:'2px 6px',flex:1}} value={tactical.time} onChange={e => setTactical({...tactical, time: e.target.value})}>
-            <option value="all">Todo histórico</option>
-            <option value="1h">Última 1h</option>
-            <option value="6h">Últimas 6h</option>
-            <option value="24h">Últimas 24h</option>
-          </select>
+        {showFilters && (
+          <div style={{ background: 'var(--card)', padding: 12, borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <label className="flex items-center gap-1 fs-xs" style={{cursor:'pointer', width: '100%', marginBottom: 4, fontWeight: 'bold'}}>
+              <input type="checkbox" checked={showMarkers} onChange={e=>setShowMarkers(e.target.checked)}/> Mostrar puntos individuales
+            </label>
+            <select className="btn btn-sm btn-outline" style={{padding:'4px 8px',flex:1, borderRadius: 8}} value={tactical.time} onChange={e => setTactical({...tactical, time: e.target.value})}>
+              <option value="all">Tiempo: Todo</option>
+              <option value="1h">Última 1h</option>
+              <option value="6h">Últimas 6h</option>
+              <option value="24h">Últimas 24h</option>
+            </select>
 
-          <select className="btn btn-sm btn-outline" style={{padding:'2px 6px',flex:1}} value={tactical.severity} onChange={e => setTactical({...tactical, severity: e.target.value})}>
-            <option value="all">Severidad (Todas)</option>
-            <option value="alta">Alta</option>
-            <option value="media">Media</option>
-            <option value="baja">Baja</option>
-          </select>
+            <select className="btn btn-sm btn-outline" style={{padding:'4px 8px',flex:1, borderRadius: 8}} value={tactical.severity} onChange={e => setTactical({...tactical, severity: e.target.value})}>
+              <option value="all">Gravedad: Todas</option>
+              <option value="alta">Alta</option>
+              <option value="media">Media</option>
+              <option value="baja">Baja</option>
+            </select>
 
-          <select className="btn btn-sm btn-outline" style={{padding:'2px 6px',flex:1}} value={tactical.status} onChange={e => setTactical({...tactical, status: e.target.value})}>
-            <option value="all">Estado (Todos)</option>
-            <option value="pendiente">Solo Pendientes</option>
-            <option value="en_proceso">En Proceso</option>
-          </select>
-        </div>
+            <select className="btn btn-sm btn-outline" style={{padding:'4px 8px',flex:1, borderRadius: 8}} value={tactical.status} onChange={e => setTactical({...tactical, status: e.target.value})}>
+              <option value="all">Estado: Todos</option>
+              <option value="pendiente">Pendientes</option>
+              <option value="en_proceso">En Proceso</option>
+            </select>
+          </div>
+        )}
       </div>
       <div className="legend">
         <div className="fw-700 fs-xs">🔴 Intensidad</div>
         <div className="legend-bar"/><div className="legend-labels"><span>Baja</span><span>Alta</span><span>Crítica</span></div>
       </div>
-      <div style={{position:'absolute',bottom:60,left:10,zIndex:150,background:'rgba(255,255,255,0.95)',padding:'6px 12px',borderRadius:8,border:'2px solid #eee',fontSize:'0.78rem'}}>
+      <div style={{position:'absolute',bottom:20,left:10,zIndex:150,background:'rgba(255,255,255,0.95)',padding:'6px 12px',borderRadius:20,border:'none', boxShadow: '0 2px 6px rgba(0,0,0,0.1)', fontSize:'0.78rem'}}>
         📍 <b>{reports.length}</b> · 🎯 <b>{criticalZones.length}</b>
       </div>
     </div>

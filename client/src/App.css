@@ -341,7 +341,8 @@ select {
 
 /* ─── Layout Ajustes ─── */
 .pb-nav { padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
-.split-home { display: flex; flex-direction: column; height: 100%; }
-.split-home .map-half { height: 45vh; flex-shrink: 0; border-bottom: 2px solid var(--border); position: relative; }
-.split-home .list-half { flex: 1; overflow-y: auto; background: var(--bg2); padding: 12px; }
+.split-home { position: relative; height: 100%; width: 100%; overflow: hidden; }
+.split-home .map-half { position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 1; }
+.split-home .list-half { position: absolute; bottom: 0; left: 0; right: 0; z-index: 200; background: var(--bg2); padding: 12px; padding-top: 16px; max-height: 45vh; min-height: 15vh; overflow-y: auto; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 16px rgba(0,0,0,0.2); border-top: 1px solid var(--border); }
+.split-home .list-half::-webkit-scrollbar { width: 0; } /* Hide scrollbar for cleaner look */
 .recent-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
