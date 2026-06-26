@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { fetchReports, createReport, fetchCriticalZones, fetchStats, logout } from './api';
+import { fetchReports, createReport, fetchCriticalZones, fetchStats } from './api';
 import HeatmapView from './components/HeatmapView';
 import ReportForm from './components/ReportForm';
 import CriticalZones from './components/CriticalZones';
 import Desaparecidos from './components/Desaparecidos';
-import Mascotas from './components/Mascotas';
 import Sobrevivientes from './components/Sobrevivientes';
 import StatsPanel from './components/StatsPanel';
-
 import { useTheme } from './ThemeContext';
 import Logo from './components/Logo';
 
-export default function AdminPage({ onLogout }) {
+export default function AdminPage() {
   const { dark, toggle } = useTheme();
   const [reports, setReports] = useState([]);
   const [zones, setZones] = useState([]);
@@ -19,22 +17,27 @@ export default function AdminPage({ onLogout }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [panel, setPanel] = useState('mapa');
-  const [filter, setFilter] = useState('all'); // 'all' | 'sobreviviente' | 'desaparecido'
-  const [showForm, setShowForm] = useState(null); // null | 'desaparecido' | 'sobreviviente'
+  const [filter, setFilter] = useState('all');
+  const [showForm, setShowForm] = useState(null);
 
   const loadData = useCallback(async () => {
     try {
       const [r, z, s] = await Promise.all([
         fetchReports(), fetchCriticalZones(2, 3, 'all'), fetchStats()
       ]);
-      setReports(r && r.data ? r.data : (Array.isArray(r) ? r : [])); setZones(z.zones || []); setStats(s); setError(null);
-    } catch (err) { setError(err.message); }
-    finally { setLoading(false); }
+      setReports(r && r.data ? r.data : (Array.isArray(r) ? r : []));
+      setZones(z.zones || []);
+      setStats(s);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  // Refrescar cada 60s
   useEffect(() => {
     const t = setInterval(loadData, 60000);
     return () => clearInterval(t);
@@ -46,110 +49,94 @@ export default function AdminPage({ onLogout }) {
     await loadData();
   };
 
-  const handleLogout = () => { logout(); onLogout(); };
-
-  // Filtrar reportes según tipo seleccionado
   const filteredReports = filter === 'all' ? reports : reports.filter(r => r.tipo === filter);
 
   const tabs = [
-    { key: 'mapa',            label: 'Mapa',             color: '#dc2626' },
-    { key: 'desaparecidos',   label: 'Desaparecidos',    color: '#2563eb' },
-    { key: 'mascotas',        label: 'Mascotas',         color: '#f97316' },
-    { key: 'sobrevivientes',  label: 'Sobrevivientes',   color: '#dc2626' },
-    { key: 'zonas',           label: 'Zonas Críticas',   color: '#eab308' },
-    { key: 'stats',           label: 'Estadísticas',     color: '#111' },
+    { key: 'mapa', label: 'Mapa' },
+    { key: 'desaparecidos', label: 'Desaparecidos' },
+    { key: 'sobrevivientes', label: 'Atrapados' },
+    { key: 'zonas', label: 'Zonas Críticas' },
+    { key: 'stats', label: 'Estadísticas' },
   ];
 
-  // Etiqueta del filtro activo
-  const filterLabel = filter === 'all' ? 'Todos los reportes' : filter === 'sobreviviente' ? 'Solo atrapados' : 'Solo desaparecidos';
-
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
       {/* Topbar */}
-      <div className="topbar">
+      <div className="topbar" style={{ flexShrink: 0 }}>
         <div className="flex items-center gap-2 flex-wrap">
-          <Logo size={28} />
-          <h1>📍 Hallados · Panel</h1>
-          {stats && <span className="fs-xs" style={{opacity:0.85}}>
-            {stats.total} reportes · {stats.sobrevivientes}🆘 · {stats.desaparecidos}🔍
+          <Logo size={24} />
+          <h1>Hallados</h1>
+          {stats && <span className="text-xs hide-mobile" style={{opacity:0.8}}>
+            {stats.total.toLocaleString()} reportes · {stats.sobrevivientes}🆘 · {stats.desaparecidos}🔍
           </span>}
         </div>
-        <div className="flex items-center gap-2">
-          <button className="theme-toggle" onClick={toggle} title={dark ? 'Modo claro' : 'Modo oscuro'}>
-            {dark ? '☀️' : '🌙'}
-          </button>
-          <button className="btn btn-sm" style={{borderColor:'rgba(255,255,255,0.4)',color:'#fff',background:'transparent'}}
-                  onClick={handleLogout}>Salir</button>
+        <div className="flex items-center gap-1">
+          {tabs.map(t => (
+            <button key={t.key}
+                    className={`btn btn-sm ${panel === t.key ? 'btn-outline active' : 'btn-outline'}`}
+                    style={panel === t.key ? {borderColor:'#fff',color:'#fff',background:'rgba(255,255,255,0.15)'} : {borderColor:'rgba(255,255,255,0.3)',color:'rgba(255,255,255,0.8)'}}
+                    onClick={() => setPanel(t.key)}>
+              {t.label}
+            </button>
+          ))}
+          <button className="theme-toggle" onClick={toggle} title="Tema">{dark ? '☀️' : '🌙'}</button>
         </div>
       </div>
 
-      {/* Filtro global + Tabs */}
-      <div className="panel-toolbar">
-        {/* Filtro */}
-        <div className="flex items-center gap-2 flex-wrap" style={{padding:'6px 12px'}}>
-          <span className="fs-xs text-gray fw-700">Filtrar:</span>
+      {/* Filtros */}
+      <div className="panel-toolbar" style={{ flexShrink: 0 }}>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs text-muted fw-bold" style={{textTransform:'uppercase',letterSpacing:'.05em'}}>Filtrar:</span>
           {[
             {k:'all',l:'Todos'},
             {k:'desaparecido',l:'Desaparecidos'},
-            {k:'mascota',l:'Mascotas'},
             {k:'sobreviviente',l:'Atrapados'},
           ].map(f => (
-            <button key={f.k}
-                    className={`btn btn-sm ${filter === f.k ? 'btn-outline active' : 'btn-outline'}`}
+            <button key={f.k} className={`btn btn-sm ${filter === f.k ? 'btn-outline active' : 'btn-outline'}`}
                     onClick={() => setFilter(f.k)}>
               {f.l}
             </button>
           ))}
-          <span className="fs-xs text-gray" style={{marginLeft:'auto'}}>
-            {filteredReports.length} resultados
+          <span className="text-xs text-muted" style={{marginLeft:'auto'}}>
+            {filteredReports.length.toLocaleString()} resultados
           </span>
-        </div>
-        {/* Tabs */}
-        <div className="flex gap-1" style={{padding:'0 12px 8px',overflowX:'auto'}}>
-          {tabs.map(t => {
-            const isActive = panel === t.key;
-            return (
-              <button key={t.key}
-                      className={`btn btn-sm ${isActive ? 'btn-outline active' : 'btn-outline'}`}
-                      style={isActive ? {} : {}}
-                      onClick={() => setPanel(t.key)}>
-                {t.label}
-              </button>
-            );
-          })}
         </div>
       </div>
 
       {/* Contenido */}
-      <div style={{ flex: 1, overflow: 'hidden' }}>
+      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {loading ? (
-          <div className="empty-state"><div className="spinner" style={{margin:'40px auto'}}/></div>
+          <div className="empty-state" style={{flex:1}}><div className="spinner" style={{margin:'40px auto'}}/></div>
         ) : error ? (
-          <div className="empty-state">
-            <p className="text-red fw-700">Error al cargar</p>
-            <p className="fs-sm text-gray mt-2">{error}</p>
+          <div className="empty-state" style={{flex:1}}>
+            <p className="text-red fw-bold">Error al cargar</p>
+            <p className="text-sm text-muted mt-2">{error}</p>
             <button className="btn btn-sm btn-outline mt-3" onClick={loadData}>Reintentar</button>
           </div>
         ) : (
           <>
             {panel === 'mapa' && (
-              <HeatmapView reports={filteredReports} criticalZones={zones}
-                           filter={filter} onFilterChange={setFilter} />
+              <div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+                <HeatmapView reports={filteredReports} criticalZones={zones}
+                             filter={filter} onFilterChange={setFilter} />
+              </div>
             )}
             {panel === 'desaparecidos' && (
-              <Desaparecidos reports={reports.filter(r => r.tipo === 'desaparecido')}
-                             onUpdate={loadData} />
-            )}
-            {panel === 'mascotas' && (
-              <Mascotas reports={reports.filter(r => r.tipo === 'mascota')}
-                        onUpdate={loadData} />
+              <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+                <Desaparecidos reports={reports.filter(r => r.tipo === 'desaparecido')} onUpdate={loadData} />
+              </div>
             )}
             {panel === 'sobrevivientes' && (
-              <Sobrevivientes reports={reports.filter(r => r.tipo === 'sobreviviente')}
-                              onUpdate={loadData} />
+              <div style={{flex:1,overflow:'hidden',display:'flex',flexDirection:'column'}}>
+                <Sobrevivientes reports={reports.filter(r => r.tipo === 'sobreviviente')} onUpdate={loadData} />
+              </div>
             )}
-            {panel === 'zonas' && <CriticalZones zones={zones} />}
-            {panel === 'stats' && <StatsPanel stats={stats} zones={zones} />}
+            {panel === 'zonas' && (
+              <div style={{flex:1,overflow:'hidden'}}><CriticalZones zones={zones} /></div>
+            )}
+            {panel === 'stats' && (
+              <div style={{flex:1,overflow:'hidden'}}><StatsPanel stats={stats} zones={zones} /></div>
+            )}
           </>
         )}
       </div>
@@ -158,8 +145,6 @@ export default function AdminPage({ onLogout }) {
       <div style={{ position: 'fixed', bottom: 20, right: 20, zIndex: 200, display: 'flex', flexDirection: 'column', gap: 10 }}>
         <button className="fab" style={{background:'var(--blue)',width:48,height:48,fontSize:18,fontWeight:'bold',boxShadow:'0 4px 14px rgba(37,99,235,0.3)'}}
                 onClick={() => setShowForm('desaparecido')}>+ D</button>
-        <button className="fab" style={{background:'var(--yellow)',width:48,height:48,fontSize:18,fontWeight:'bold',boxShadow:'0 4px 14px rgba(234,179,8,0.3)'}}
-                onClick={() => setShowForm('mascota')}>+ M</button>
         <button className="fab" style={{fontWeight:'bold'}} onClick={() => setShowForm('sobreviviente')}>+ S</button>
       </div>
 
