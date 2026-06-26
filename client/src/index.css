@@ -142,3 +142,15 @@
     color: rgba(255,255,255,0.6); font-size: 0.6rem;
   }
 }
+
+/* ─── LocationPicker custom marker ───────────── */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+.custom-marker div {
+  transition: transform 0.15s ease;
+}
+.custom-marker div:hover {
+  transform: scale(1.2);
+}

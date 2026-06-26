@@ -1,11 +1,11 @@
 import React, { useState, useRef, useCallback } from 'react';
+import LocationPicker from './LocationPicker';
 
 export default function ReportForm({ tipo, onSubmit, onCancel }) {
   const isDes = tipo === 'desaparecido';
   const isMas = tipo === 'mascota';
   const [f, setF] = useState({ lat:'', lng:'', nombre:'', identificacion: '', edad:'', ultimaUbicacion:'', description:'', survivorsCount:'', severity:'alta', contactoReportante:'', telefonoReportante:'', encontrado: false });
   const [submitting, setSubmitting] = useState(false);
-  const [gps, setGps] = useState({ active: false, loading: false, error: '' });
   const [foto, setFoto] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const [fotoType, setFotoType] = useState(null);
@@ -14,19 +14,10 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
 
   const set = (k, v) => setF(p => ({...p, [k]: v}));
 
-  const getGPS = () => {
-    if (!navigator.geolocation) { setGps({active:false,loading:false,error:'No soportado'}); return; }
-    setGps({active:true,loading:true,error:''});
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        set('lat', pos.coords.latitude.toFixed(6));
-        set('lng', pos.coords.longitude.toFixed(6));
-        setGps({active:true,loading:false,error:'',accuracy:Math.round(pos.coords.accuracy)});
-      },
-      err => setGps({active:false,loading:false,error:'GPS denegado o no disponible. Ingresa manualmente.'}),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
-    );
-  };
+  const handleLocationChange = useCallback((lat, lng) => {
+    set('lat', lat);
+    set('lng', lng);
+  }, []);
 
   const compressImage = useCallback((file) => {
     if (!file.type.startsWith('image/')) return;
@@ -79,37 +70,13 @@ export default function ReportForm({ tipo, onSubmit, onCancel }) {
     <form onSubmit={submit} className="flex flex-col gap-3.5">
       <h2 className="text-lg font-bold">{titulo}</h2>
 
-      {/* GPS */}
-      <div className={`rounded-2xl p-5 text-center border-2 border-dashed transition-colors ${gps.active && f.lat ? 'border-green-600 bg-green-50' : 'border-blue-600 bg-surface'}`}>
-        <div className="font-bold mb-2">Ubicación</div>
-        {gps.active && f.lat ? (
-          <div>
-            <div className="font-bold text-green-600">Ubicación detectada</div>
-            <div className="text-sm text-txt3 mt-1">{f.lat}, {f.lng}</div>
-            {gps.accuracy && <div className="text-xs text-txt3">Precisión: ±{gps.accuracy}m</div>}
-            <button type="button" className="mt-2 inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer bg-surface text-txt2 border border-border2" onClick={getGPS}>Actualizar</button>
-          </div>
-        ) : gps.loading ? (
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-5 h-5 border-2 border-border2 border-t-red-600 rounded-full animate-spin" />
-            <span className="text-sm text-txt3">Obteniendo GPS...</span>
-          </div>
-        ) : (
-          <div>
-            <button type="button" className="w-full py-2.5 px-4 bg-blue-600 text-white rounded-xl font-semibold cursor-pointer transition-all hover:bg-blue-700" onClick={getGPS}>
-              Usar GPS del dispositivo
-            </button>
-            {gps.error && <div className="text-sm text-red-600 mt-2">{gps.error}</div>}
-          </div>
-        )}
-        <div className="mt-3">
-          <div className="text-xs text-txt3 mb-1">O ingresa manualmente:</div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <input type="number" step="any" placeholder="Latitud" value={f.lat} onChange={e => set('lat', e.target.value)} />
-            <input type="number" step="any" placeholder="Longitud" value={f.lng} onChange={e => set('lng', e.target.value)} />
-          </div>
-        </div>
-      </div>
+      {/* Location Picker */}
+      <LocationPicker
+        lat={f.lat}
+        lng={f.lng}
+        onLocationChange={handleLocationChange}
+        required={true}
+      />
 
       {/* Photo */}
       {(isDes || isMas) && (
